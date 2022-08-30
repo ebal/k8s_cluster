@@ -1,0 +1,74 @@
+#cloud-config
+
+#disable_root: true
+disable_root: false
+chpasswd:
+  list: |
+    root:ping
+  expire: False
+
+ssh_pwauth: no
+
+users:
+  - name: ubuntu
+    ssh_import_id:
+      - gh:${gh_user}
+    shell: /bin/bash
+    sudo: ALL=(ALL) NOPASSWD:ALL
+
+write_files:
+  - path: /etc/ssh/sshd_config
+    content: |
+      AcceptEnv LANG LC_*
+      AllowUsers ubuntu
+      ChallengeResponseAuthentication no
+      Compression NO
+      MaxSessions 3
+      PasswordAuthentication no
+      PermitRootLogin no
+      Port ${sshdport}
+      PrintMotd no
+      Subsystem sftp  /usr/lib/openssh/sftp-server
+      UseDNS no
+      UsePAM yes
+      X11Forwarding no
+      Ciphers chacha20-poly1305@openssh.com,aes128-ctr,aes192-ctr,aes256-ctr,aes128-gcm@openssh.com,aes256-gcm@openssh.com
+      KexAlgorithms curve25519-sha256,curve25519-sha256@libssh.org,diffie-hellman-group-exchange-sha256,diffie-hellman-group16-sha512,diffie-hellman-group18-sha512,diffie-hellman-group14-sha256
+      MACs umac-128-etm@openssh.com,hmac-sha2-256-etm@openssh.com,hmac-sha2-512-etm@openssh.com,umac-128@openssh.com,hmac-sha2-256,hmac-sha2-512
+      HostKeyAlgorithms ecdsa-sha2-nistp384-cert-v01@openssh.com,ecdsa-sha2-nistp521-cert-v01@openssh.com,ssh-ed25519-cert-v01@openssh.com,ssh-rsa-cert-v01@openssh.com,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,ssh-ed25519,rsa-sha2-512,rsa-sha2-256,ssh-rsa
+
+# Set TimeZone
+timezone: ${timezone}
+
+hostname: "${hostname}"
+
+growpart:
+  mode: auto
+  devices: ["/"]
+  ignore_growroot_disabled: false
+
+# Install packages
+packages:
+  - bash-completion
+  - figlet
+  - mlocate
+  - ncdu
+  - python3-apt
+
+# Update/Upgrade & Reboot if necessary
+package_update: true
+package_upgrade: true
+package_reboot_if_required: true
+
+# PostInstall
+runcmd:
+  - figlet ${hostname} > /etc/motd
+  - updatedb
+  # Firewall
+  - ufw allow "${sshdport}"/tcp && ufw enable
+  # Remove cloud-init
+  - apt-get -y autoremove --purge cloud-init lxc lxd snapd
+  - apt-get -y --purge autoremove
+  - apt -y autoclean
+  - apt -y clean all
+  - date -R > /root/Finished.txt
