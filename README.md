@@ -2,57 +2,64 @@
 
 > [Kubernetes](https://kubernetes.io/), also known as **K8s**, is an open-source system for automating deployment, scaling, and management of containerized applications.
 
+***Notice*** The initial blog post is here: [blog post](https://balaskas.gr/blog/2022/08/31/creating-a-kubernetes-cluster-with-kubeadm-on-ubuntu-2204-lts/)
+
 <!-- toc -->
 
 - [Prerequisites](#Prerequisites)
 - [Git Terraform Code for the kubernetes cluster](#Git-Terraform-Code-for-the-kubernetes-cluster)
-  * [Ubuntu 22.04 Image](#Ubuntu-2204-Image)
+  - [Initilaze the working directory](#Initilaze-the-working-directory)
+  - [Ubuntu 22.04 Image](#Ubuntu-2204-Image)
+  - [Spawn the VMs](#Spawn-the-VMs)
 - [Control-Plane Node](#Control-Plane-Node)
-  * [Ports on the control-plane node](#Ports-on-the-control-plane-node)
-  * [Firewall on the control-plane node](#Firewall-on-the-control-plane-node)
-  * [Hosts file in the control-plane node](#Hosts-file-in-the-control-plane-node)
-  * [No Swap on the control-plane node](#No-Swap-on-the-control-plane-node)
-  * [Kernel modules on the control-plane node](#Kernel-modules-on-the-control-plane-node)
-  * [NeedRestart on the control-plane node](#NeedRestart-on-the-control-plane-node)
-  * [Installing a Container Runtime on the control-plane node](#Installing-a-Container-Runtime-on-the-control-plane-node)
-  * [Installing kubeadm, kubelet and kubectl on the control-plane node](#Installing-kubeadm-kubelet-and-kubectl-on-the-control-plane-node)
-  * [Initializing the control-plane node](#Initializing-the-control-plane-node)
-  * [Create user access config to the k8s control-plane node](#Create-user-access-config-to-the-k8s-control-plane-node)
-  * [Verify the control-plane node](#Verify-the-control-plane-node)
-  * [Install an overlay network provider on the control-plane node](#Install-an-overlay-network-provider-on-the-control-plane-node)
-  * [Verify CoreDNS is running on the control-plane node](#Verify-CoreDNS-is-running-on-the-control-plane-node)
+  - [Ports on the control-plane node](#Ports-on-the-control-plane-node)
+  - [Firewall on the control-plane node](#Firewall-on-the-control-plane-node)
+  - [Hosts file in the control-plane node](#Hosts-file-in-the-control-plane-node)
+    - [Updating your hosts file](#Updating-your-hosts-file)
+  - [No Swap on the control-plane node](#No-Swap-on-the-control-plane-node)
+  - [Kernel modules on the control-plane node](#Kernel-modules-on-the-control-plane-node)
+  - [NeedRestart on the control-plane node](#NeedRestart-on-the-control-plane-node)
+    - [temporarily](#temporarily)
+    - [permanently](#permanently)
+  - [Installing a Container Runtime on the control-plane node](#Installing-a-Container-Runtime-on-the-control-plane-node)
+  - [Installing kubeadm, kubelet and kubectl on the control-plane node](#Installing-kubeadm-kubelet-and-kubectl-on-the-control-plane-node)
+  - [Initializing the control-plane node](#Initializing-the-control-plane-node)
+  - [Create user access config to the k8s control-plane node](#Create-user-access-config-to-the-k8s-control-plane-node)
+  - [Verify the control-plane node](#Verify-the-control-plane-node)
+  - [Install an overlay network provider on the control-plane node](#Install-an-overlay-network-provider-on-the-control-plane-node)
+  - [Verify CoreDNS is running on the control-plane node](#Verify-CoreDNS-is-running-on-the-control-plane-node)
 - [Worker Nodes](#Worker-Nodes)
-  * [Ports on the worker nodes](#Ports-on-the-worker-nodes)
-  * [Firewall on the worker nodes](#Firewall-on-the-worker-nodes)
-  * [Hosts file in the worker node](#Hosts-file-in-the-worker-node)
-  * [No Swap on the worker node](#No-Swap-on-the-worker-node)
-  * [Kernel modules on the worker node](#Kernel-modules-on-the-worker-node)
-  * [NeedRestart on the worker node](#NeedRestart-on-the-worker-node)
-  * [Installing a Container Runtime on the worker node](#Installing-a-Container-Runtime-on-the-worker-node)
-  * [Installing kubeadm, kubelet and kubectl on the worker node](#Installing-kubeadm-kubelet-and-kubectl-on-the-worker-node)
-  * [Get Token from the control-plane node](#Get-Token-from-the-control-plane-node)
-  * [Get Certificate Hash from the control-plane node](#Get-Certificate-Hash-from-the-control-plane-node)
-  * [Join Workers to the kubernetes cluster](#Join-Workers-to-the-kubernetes-cluster)
+  - [Ports on the worker nodes](#Ports-on-the-worker-nodes)
+  - [Firewall on the worker nodes](#Firewall-on-the-worker-nodes)
+  - [Hosts file in the worker node](#Hosts-file-in-the-worker-node)
+  - [No Swap on the worker node](#No-Swap-on-the-worker-node)
+  - [Kernel modules on the worker node](#Kernel-modules-on-the-worker-node)
+  - [NeedRestart on the worker node](#NeedRestart-on-the-worker-node)
+  - [Installing a Container Runtime on the worker node](#Installing-a-Container-Runtime-on-the-worker-node)
+  - [Installing kubeadm, kubelet and kubectl on the worker node](#Installing-kubeadm-kubelet-and-kubectl-on-the-worker-node)
+  - [Get Token from the control-plane node](#Get-Token-from-the-control-plane-node)
+  - [Get Certificate Hash from the control-plane node](#Get-Certificate-Hash-from-the-control-plane-node)
+  - [Join Workers to the kubernetes cluster](#Join-Workers-to-the-kubernetes-cluster)
 - [Is the kubernetes cluster running ?](#Is-the-kubernetes-cluster-running-)
 - [Kubernetes Dashboard](#Kubernetes-Dashboard)
-  * [Install kubernetes dashboard](#Install-kubernetes-dashboard)
-  * [Add a Node Port to kubernetes dashboard](#Add-a-Node-Port-to-kubernetes-dashboard)
-    + [Patch kubernetes-dashboard](#Patch-kubernetes-dashboard)
-    + [Edit kubernetes-dashboard Service](#Edit-kubernetes-dashboard-Service)
-  * [Accessing Kubernetes Dashboard](#Accessing-Kubernetes-Dashboard)
-  * [Create An Authentication Token (RBAC)](#Create-An-Authentication-Token-RBAC)
-    + [Creating a Service Account](#Creating-a-Service-Account)
-    + [Creating a ClusterRoleBinding](#Creating-a-ClusterRoleBinding)
-    + [Getting a Bearer Token](#Getting-a-Bearer-Token)
-  * [Browsing Kubernetes Dashboard](#Browsing-Kubernetes-Dashboard)
+  - [Install kubernetes dashboard](#Install-kubernetes-dashboard)
+  - [Add a Node Port to kubernetes dashboard](#Add-a-Node-Port-to-kubernetes-dashboard)
+    - [Patch kubernetes-dashboard](#Patch-kubernetes-dashboard)
+    - [Edit kubernetes-dashboard Service](#Edit-kubernetes-dashboard-Service)
+  - [Accessing Kubernetes Dashboard](#Accessing-Kubernetes-Dashboard)
+  - [Create An Authentication Token (RBAC)](#Create-An-Authentication-Token-RBAC)
+    - [Creating a Service Account](#Creating-a-Service-Account)
+    - [Creating a ClusterRoleBinding](#Creating-a-ClusterRoleBinding)
+    - [Getting a Bearer Token](#Getting-a-Bearer-Token)
+  - [Browsing Kubernetes Dashboard](#Browsing-Kubernetes-Dashboard)
 - [Nginx App](#Nginx-App)
-  * [Install nginx-app](#Install-nginx-app)
-  * [Get Deployment](#Get-Deployment)
-  * [Expose Nginx-App](#Expose-Nginx-App)
-  * [Verify Service nginx-app](#Verify-Service-nginx-app)
-  * [Describe Service nginx-app](#Describe-Service-nginx-app)
-  * [Curl Nginx-App](#Curl-Nginx-App)
-  * [Nginx-App from Browser](#Nginx-App-from-Browser)
+  - [Install nginx-app](#Install-nginx-app)
+  - [Get Deployment](#Get-Deployment)
+  - [Expose Nginx-App](#Expose-Nginx-App)
+  - [Verify Service nginx-app](#Verify-Service-nginx-app)
+  - [Describe Service nginx-app](#Describe-Service-nginx-app)
+  - [Curl Nginx-App](#Curl-Nginx-App)
+  - [Nginx-App from Browser](#Nginx-App-from-Browser)
 - [That's it !](#Thats-it-)
 
 <!-- tocstop -->
@@ -63,11 +70,11 @@ I am going to use three (3) Virtual Machines in my local lab. My home lab is bas
 
 ## Prerequisites
 
-* at least 3 Virtual Machines of Ubuntu 22.04 (one for control-plane, two for worker nodes)
-* 2GB (or more) of RAM on each Virtual Machine
-* 2 CPUs (or more) on each Virtual Machine
-* 20Gb of hard disk on each Virtual Machine
-* No SWAP partition/image/file on each Virtual Machine
+- at least 3 Virtual Machines of Ubuntu 22.04 (one for control-plane, two for worker nodes)
+- 2GB (or more) of RAM on each Virtual Machine
+- 2 CPUs (or more) on each Virtual Machine
+- 20Gb of hard disk on each Virtual Machine
+- No SWAP partition/image/file on each Virtual Machine
 
 ## Git Terraform Code for the kubernetes cluster
 
@@ -87,14 +94,52 @@ You will **need** to make appropriate changes. Open **Variables.tf** for that. T
 
 But pretty much, everything else should work out of the box. Change the **vmem** and **vcpu** settings to your needs.
 
+### Initilaze the working directory
+
 **Init** terraform before running the below shell script.
+This action will download in your local directory all the required teffarorm providers or modules.
 
 ```bash
 terraform init
 
 ```
 
-and then run
+### Ubuntu 22.04 Image
+
+Before going forward with spawning the VMs, we need to have the ubuntu 22.04 image on our system, or change the code to get it from the internet.
+
+In **Variables.tf** terraform file, you will notice the below entries
+
+```bash
+# The image source of the VM
+# cloud_image = "https://cloud-images.ubuntu.com/jammy/current/focal-server-cloudimg-amd64.img"
+cloud_image = "../jammy-server-cloudimg-amd64.img"
+
+```
+
+If you do not want to download the Ubuntu 22.04 cloud server image then make the below change
+
+```bash
+# The image source of the VM
+cloud_image = "https://cloud-images.ubuntu.com/jammy/current/focal-server-cloudimg-amd64.img"
+#cloud_image = "../jammy-server-cloudimg-amd64.img"
+
+```
+
+otherwise you need to download it, in the upper directory, to speed things up
+
+```bash
+cd ../
+curl -sLO https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img
+cd -
+
+ls -l ../jammy-server-cloudimg-amd64.img
+
+```
+
+### Spawn the VMs
+
+We are ready to spawn our 3 VMs by running `terraform plan` & `terraform apply`
 
 ```bash
 ./start.sh
@@ -128,23 +173,7 @@ ssh  -l ubuntu 192.168.122.169
 
 replace the IP with what the output gave you.
 
-### Ubuntu 22.04 Image
-
-If you noticed in the terraform code, I have the below declaration as the cloud image:
-
-```bash
-../jammy-server-cloudimg-amd64.img
-
-```
-
-that means, I've already downloaded it, in the upper directory to speed things up!
-
-```bash
-cd ../
-curl -sLO https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img
-cd -
-
-```
+***DISCLAIMER*** if something failed, destroy everything with `./destroy.sh` to remove any garbages before run `./start.sh` again !!!
 
 ## Control-Plane Node
 
@@ -225,6 +254,20 @@ If you already know them, then your `/etc/hosts` file should look like this:
 
 replace the IPs to yours.
 
+#### Updating your hosts file
+
+if you already the IPs of your VMs, run the below script to ALL 3 VMs
+
+```bash
+sudo tee -a /etc/hosts <<EOF
+
+192.168.122.169  k8scpnode
+192.168.122.40   k8wrknode1
+192.168.122.8    k8wrknode2
+EOF
+
+```
+
 ### No Swap on the control-plane node
 
 Be sure that **SWAP** is disabled in all virtual machines!
@@ -254,8 +297,8 @@ Nevertheless it is always a good thing to douple check.
 
 We need to load the below kernel modules on all k8s nodes, so k8s can create some network magic!
 
-* overlay
-* br_netfilter
+- overlay
+- br_netfilter
 
 Run the below bash snippet that will do that, and also will enable the forwarding features of the network.
 
@@ -283,6 +326,17 @@ sudo sysctl --system
 ### NeedRestart on the control-plane node
 
 Before installing any software, we need to make a tiny change to **needrestart** program. This will help with the automation of installing packages and will stop asking -via dialog- if we would like to restart the services!
+
+#### temporarily
+
+```bash
+export -p NEEDRESTART_MODE="a"
+
+```
+
+#### permanently
+
+a more permanent way, is to update the configuration file
 
 ```bash
 echo "\$nrconf{restart} = 'a';" | sudo tee -a /etc/needrestart/needrestart.conf
@@ -339,10 +393,10 @@ We can now initialize our control-plane node for our kubernetes cluster.
 
 There are a few things we need to be careful about:
 
-* We can specify the control-plane-endpoint if we are planning to have a high available k8s cluster. (we will skip this for now),
-* Choose a Pod network add-on (next section) but be aware that CoreDNS (DNS and Service Discovery) will not run till then (later),
-* define where is our container runtime socket (we will skip it)
-* advertise the API server (we will skip it)
+- We can specify the control-plane-endpoint if we are planning to have a high available k8s cluster. (we will skip this for now),
+- Choose a Pod network add-on (next section) but be aware that CoreDNS (DNS and Service Discovery) will not run till then (later),
+- define where is our container runtime socket (we will skip it)
+- advertise the API server (we will skip it)
 
 But we will define our Pod Network CIDR to the default value of the Pod network add-on so everything will go smoothly later on.
 
@@ -404,16 +458,22 @@ k apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation
 Verify that the control-plane node is Up & Running and the control-plane pods (as coredns pods) are also running
 
 ```bash
-$ k get nodes -o wide
+k get nodes -o wide
 
+```
+
+```bash
 NAME        STATUS   ROLES           AGE   VERSION   INTERNAL-IP       EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
 k8scpnode   Ready    control-plane   54s   v1.25.0   192.168.122.169   <none>        Ubuntu 22.04.1 LTS   5.15.0-46-generic   containerd://1.6.8
 
 ```
 
 ```bash
-$ k get pods -A -o wide
+k get pods -A -o wide
 
+```
+
+```bash
 NAMESPACE    NAME                              READY STATUS  RESTARTS AGE IP              NODE      NOMINATED NODE READINESS GATES
 kube-flannel kube-flannel-ds-zqv2b             1/1   Running 0        36s 192.168.122.169 k8scpnode <none>         <none>
 kube-system  coredns-565d847f94-lg54q          1/1   Running 0        38s 10.244.0.2      k8scpnode <none>         <none>
@@ -520,7 +580,7 @@ sudo sysctl --system
 ### NeedRestart on the worker node
 
 ```bash
-echo "\$nrconf{restart} = 'a';" | sudo tee -a /etc/needrestart/needrestart.conf
+export -p NEEDRESTART_MODE="a"
 
 ```
 
@@ -553,8 +613,6 @@ sudo apt-add-repository -y "deb http://apt.kubernetes.io/ kubernetes-xenial main
 sleep 5
 
 sudo apt install -y kubelet kubeadm kubectl
-
-sudo kubeadm config images pull
 
 ```
 
@@ -725,7 +783,11 @@ To access the dashboard we need to have a NodePort in the kubernetes-dashboard s
 
 We can either **Patch** the service or **edit** the yaml file.
 
+Choose one of these two ways, do not run both of them (unnecessary - not harmful)
+
 #### Patch kubernetes-dashboard
+
+This is one way to add a NodePort.
 
 ```bash
 kubectl --namespace kubernetes-dashboard patch svc kubernetes-dashboard -p '{"spec": {"type": "NodePort"}}'
@@ -756,6 +818,8 @@ kubernetes-dashboard        NodePort    10.100.65.122   <none>        443:32709/
 we can see the **30480** in the kubernetes-dashboard.
 
 #### Edit kubernetes-dashboard Service
+
+This is an alternative way to add a NodePort.
 
 ```bash
 kubectl edit svc -n kubernetes-dashboard kubernetes-dashboard
@@ -1027,7 +1091,7 @@ Commercial support is available at
 
 ![k8s_nginx-app.jpg](attachments/88d4150c.jpg)
 
-## That's it !
+## That's it
 
 I hope you enjoyed this blog post.
 
@@ -1074,6 +1138,5 @@ random_id.id["k8scpnode"]: Destruction complete after 0s
 random_id.id["k8wrknode1"]: Destruction complete after 0s
 
 Destroy complete! Resources: 16 destroyed.
-
 
 ```
