@@ -1,10 +1,10 @@
 terraform {
-  required_version = ">= 1.2"
+  required_version = ">= 1.3"
 
   required_providers {
     libvirt = {
       source  = "dmacvicar/libvirt"
-      version = "0.6.14"
+      version = "0.7.0"
     }
 
     template = {
