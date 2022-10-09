@@ -1,4 +1,4 @@
-# Creating a kubernetes cluster with kubeadm on Ubuntu 22.04 LTS
+# Creating a kubernetes cluster with kubeadm on Ubuntu 22.04 LTS - weave
 
 > [Kubernetes](https://kubernetes.io/), also known as **K8s**, is an open-source system for automating deployment, scaling, and management of containerized applications.
 
@@ -8,59 +8,47 @@
 
 - [Prerequisites](#Prerequisites)
 - [Git Terraform Code for the kubernetes cluster](#Git-Terraform-Code-for-the-kubernetes-cluster)
-  - [Initilaze the working directory](#Initilaze-the-working-directory)
-  - [Ubuntu 22.04 Image](#Ubuntu-2204-Image)
-  - [Spawn the VMs](#Spawn-the-VMs)
+  * [Initilaze the working directory](#Initilaze-the-working-directory)
+  * [Ubuntu 22.04 Image](#Ubuntu-2204-Image)
+  * [Spawn the VMs](#Spawn-the-VMs)
 - [Control-Plane Node](#Control-Plane-Node)
-  - [Ports on the control-plane node](#Ports-on-the-control-plane-node)
-  - [Firewall on the control-plane node](#Firewall-on-the-control-plane-node)
-  - [Hosts file in the control-plane node](#Hosts-file-in-the-control-plane-node)
-    - [Updating your hosts file](#Updating-your-hosts-file)
-  - [No Swap on the control-plane node](#No-Swap-on-the-control-plane-node)
-  - [Kernel modules on the control-plane node](#Kernel-modules-on-the-control-plane-node)
-  - [NeedRestart on the control-plane node](#NeedRestart-on-the-control-plane-node)
-    - [temporarily](#temporarily)
-    - [permanently](#permanently)
-  - [Installing a Container Runtime on the control-plane node](#Installing-a-Container-Runtime-on-the-control-plane-node)
-  - [Installing kubeadm, kubelet and kubectl on the control-plane node](#Installing-kubeadm-kubelet-and-kubectl-on-the-control-plane-node)
-  - [Initializing the control-plane node](#Initializing-the-control-plane-node)
-  - [Create user access config to the k8s control-plane node](#Create-user-access-config-to-the-k8s-control-plane-node)
-  - [Verify the control-plane node](#Verify-the-control-plane-node)
-  - [Install an overlay network provider on the control-plane node](#Install-an-overlay-network-provider-on-the-control-plane-node)
-  - [Verify CoreDNS is running on the control-plane node](#Verify-CoreDNS-is-running-on-the-control-plane-node)
+  * [Ports on the control-plane node](#Ports-on-the-control-plane-node)
+  * [Firewall on the control-plane node](#Firewall-on-the-control-plane-node)
+  * [Hosts file in the control-plane node](#Hosts-file-in-the-control-plane-node)
+    + [Updating your hosts file](#Updating-your-hosts-file)
+  * [No Swap on the control-plane node](#No-Swap-on-the-control-plane-node)
+  * [Kernel modules on the control-plane node](#Kernel-modules-on-the-control-plane-node)
+  * [NeedRestart on the control-plane node](#NeedRestart-on-the-control-plane-node)
+    + [temporarily](#temporarily)
+    + [permanently](#permanently)
+  * [Installing a Container Runtime on the control-plane node](#Installing-a-Container-Runtime-on-the-control-plane-node)
+  * [Installing kubeadm, kubelet and kubectl on the control-plane node](#Installing-kubeadm-kubelet-and-kubectl-on-the-control-plane-node)
+  * [Initializing the control-plane node](#Initializing-the-control-plane-node)
+  * [Create user access config to the k8s control-plane node](#Create-user-access-config-to-the-k8s-control-plane-node)
+  * [Verify the control-plane node](#Verify-the-control-plane-node)
+  * [Install an overlay network provider on the control-plane node](#Install-an-overlay-network-provider-on-the-control-plane-node)
+    + [Weave Firewall in the control-plane node](#Weave-Firewall-in-the-control-plane-node)
+  * [Verify CoreDNS is running on the control-plane node](#Verify-CoreDNS-is-running-on-the-control-plane-node)
 - [Worker Nodes](#Worker-Nodes)
-  - [Ports on the worker nodes](#Ports-on-the-worker-nodes)
-  - [Firewall on the worker nodes](#Firewall-on-the-worker-nodes)
-  - [Hosts file in the worker node](#Hosts-file-in-the-worker-node)
-  - [No Swap on the worker node](#No-Swap-on-the-worker-node)
-  - [Kernel modules on the worker node](#Kernel-modules-on-the-worker-node)
-  - [NeedRestart on the worker node](#NeedRestart-on-the-worker-node)
-  - [Installing a Container Runtime on the worker node](#Installing-a-Container-Runtime-on-the-worker-node)
-  - [Installing kubeadm, kubelet and kubectl on the worker node](#Installing-kubeadm-kubelet-and-kubectl-on-the-worker-node)
-  - [Get Token from the control-plane node](#Get-Token-from-the-control-plane-node)
-  - [Get Certificate Hash from the control-plane node](#Get-Certificate-Hash-from-the-control-plane-node)
-  - [Join Workers to the kubernetes cluster](#Join-Workers-to-the-kubernetes-cluster)
+  * [Ports on the worker nodes](#Ports-on-the-worker-nodes)
+  * [Firewall on the worker nodes](#Firewall-on-the-worker-nodes)
+    + [Weave Firewall in the workder nodes](#Weave-Firewall-in-the-workder-nodes)
+  * [Hosts file in the worker node](#Hosts-file-in-the-worker-node)
+  * [No Swap on the worker node](#No-Swap-on-the-worker-node)
+  * [Kernel modules on the worker node](#Kernel-modules-on-the-worker-node)
+  * [NeedRestart on the worker node](#NeedRestart-on-the-worker-node)
+  * [Installing a Container Runtime on the worker node](#Installing-a-Container-Runtime-on-the-worker-node)
+  * [Installing kubeadm, kubelet and kubectl on the worker node](#Installing-kubeadm-kubelet-and-kubectl-on-the-worker-node)
+  * [Get Token from the control-plane node](#Get-Token-from-the-control-plane-node)
+  * [Get Certificate Hash from the control-plane node](#Get-Certificate-Hash-from-the-control-plane-node)
+  * [Join Workers to the kubernetes cluster](#Join-Workers-to-the-kubernetes-cluster)
 - [Is the kubernetes cluster running ?](#Is-the-kubernetes-cluster-running-)
 - [Kubernetes Dashboard](#Kubernetes-Dashboard)
-  - [Install kubernetes dashboard](#Install-kubernetes-dashboard)
-  - [Add a Node Port to kubernetes dashboard](#Add-a-Node-Port-to-kubernetes-dashboard)
-    - [Patch kubernetes-dashboard](#Patch-kubernetes-dashboard)
-    - [Edit kubernetes-dashboard Service](#Edit-kubernetes-dashboard-Service)
-  - [Accessing Kubernetes Dashboard](#Accessing-Kubernetes-Dashboard)
-  - [Create An Authentication Token (RBAC)](#Create-An-Authentication-Token-RBAC)
-    - [Creating a Service Account](#Creating-a-Service-Account)
-    - [Creating a ClusterRoleBinding](#Creating-a-ClusterRoleBinding)
-    - [Getting a Bearer Token](#Getting-a-Bearer-Token)
-  - [Browsing Kubernetes Dashboard](#Browsing-Kubernetes-Dashboard)
-- [Nginx App](#Nginx-App)
-  - [Install nginx-app](#Install-nginx-app)
-  - [Get Deployment](#Get-Deployment)
-  - [Expose Nginx-App](#Expose-Nginx-App)
-  - [Verify Service nginx-app](#Verify-Service-nginx-app)
-  - [Describe Service nginx-app](#Describe-Service-nginx-app)
-  - [Curl Nginx-App](#Curl-Nginx-App)
-  - [Nginx-App from Browser](#Nginx-App-from-Browser)
-- [That's it !](#Thats-it-)
+  * [Install Weave Scope](#Install-Weave-Scope)
+  * [Port-forward to access weave-scope-app](#Port-forward-to-access-weave-scope-app)
+  * [Port-forward to k8s cluster](#Port-forward-to-k8s-cluster)
+  * [Accessing Weave Scope](#Accessing-Weave-Scope)
+- [That's it](#Thats-it)
 
 <!-- tocstop -->
 
@@ -155,9 +143,9 @@ Apply complete! Resources: 16 added, 0 changed, 0 destroyed.
 Outputs:
 
 VMs = [
-  "192.168.122.169  k8scpnode",
-  "192.168.122.40   k8wrknode1",
-  "192.168.122.8    k8wrknode2",
+  "192.168.122.149  k8scpnode",
+  "192.168.122.174  k8wrknode1",
+  "192.168.122.243  k8wrknode2",
 ]
 
 ```
@@ -167,7 +155,7 @@ Verify that you have ssh access to the VMs
 eg.
 
 ```bash
-ssh  -l ubuntu 192.168.122.169
+ssh  -l ubuntu 192.168.122.149
 
 ```
 
@@ -246,9 +234,9 @@ To include all the VMs' IPs and hostnames.
 If you already know them, then your `/etc/hosts` file should look like this:
 
 ```bash
-192.168.122.169  k8scpnode
-192.168.122.40   k8wrknode1
-192.168.122.8    k8wrknode2
+192.168.122.149  k8scpnode
+192.168.122.174   k8wrknode1
+192.168.122.243    k8wrknode2
 
 ```
 
@@ -261,9 +249,10 @@ if you already the IPs of your VMs, run the below script to ALL 3 VMs
 ```bash
 sudo tee -a /etc/hosts <<EOF
 
-192.168.122.169  k8scpnode
-192.168.122.40   k8wrknode1
-192.168.122.8    k8wrknode2
+192.168.122.149  k8scpnode
+192.168.122.174  k8wrknode1
+192.168.122.243  k8wrknode2
+
 EOF
 
 ```
@@ -446,16 +435,42 @@ k get nodes -o wide; k get pods  -A -o wide
 
 As I mentioned above, in order to use the DNS and Service Discovery services in the kubernetes (CoreDNS) we need to install a Container Network Interface (CNI) based Pod network add-on so that your Pods can communicate with each other.
 
-We will use **[flannel](https://github.com/flannel-io/flannel)** as the simplest of them.
+We will use **[Weave Net](https://www.weave.works/oss/net/)** as Weave creates a mesh overlay network between each of the nodes in the cluster, allowing for flexible routing between participants.
 
 ```bash
-k apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+WEAVE="v2.8.1"
+kubectl apply -f https://github.com/weaveworks/weave/releases/download/${WEAVE}/weave-daemonset-k8s.yaml
+
+```
+
+output
+
+```bash
+serviceaccount/weave-net created
+clusterrole.rbac.authorization.k8s.io/weave-net created
+clusterrolebinding.rbac.authorization.k8s.io/weave-net created
+role.rbac.authorization.k8s.io/weave-net created
+rolebinding.rbac.authorization.k8s.io/weave-net created
+daemonset.apps/weave-net created
+
+```
+
+#### Weave Firewall in the control-plane node
+
+permit traffic & metrics
+
+```bash
+sudo ufw allow 6781:6782/tcp
+sudo ufw allow 6783
+sudo ufw allow 6784/udp
+
+sudo ufw status
 
 ```
 
 ### Verify CoreDNS is running on the control-plane node
 
-Verify that the control-plane node is Up & Running and the control-plane pods (as coredns pods) are also running
+Verify that the control-plane node is Up & Running and the control-plane pods (as coredns pods) are also running.
 
 ```bash
 k get nodes -o wide
@@ -464,7 +479,7 @@ k get nodes -o wide
 
 ```bash
 NAME        STATUS   ROLES           AGE   VERSION   INTERNAL-IP       EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
-k8scpnode   Ready    control-plane   54s   v1.25.0   192.168.122.169   <none>        Ubuntu 22.04.1 LTS   5.15.0-46-generic   containerd://1.6.8
+k8scpnode   Ready    control-plane   54s   v1.25.0   192.168.122.149   <none>        Ubuntu 22.04.1 LTS   5.15.0-46-generic   containerd://1.6.8
 
 ```
 
@@ -475,14 +490,14 @@ k get pods -A -o wide
 
 ```bash
 NAMESPACE    NAME                              READY STATUS  RESTARTS AGE IP              NODE      NOMINATED NODE READINESS GATES
-kube-flannel kube-flannel-ds-zqv2b             1/1   Running 0        36s 192.168.122.169 k8scpnode <none>         <none>
-kube-system  coredns-565d847f94-lg54q          1/1   Running 0        38s 10.244.0.2      k8scpnode <none>         <none>
-kube-system  coredns-565d847f94-ms8zk          1/1   Running 0        38s 10.244.0.3      k8scpnode <none>         <none>
-kube-system  etcd-k8scpnode                    1/1   Running 0        50s 192.168.122.169 k8scpnode <none>         <none>
-kube-system  kube-apiserver-k8scpnode          1/1   Running 0        50s 192.168.122.169 k8scpnode <none>         <none>
-kube-system  kube-controller-manager-k8scpnode 1/1   Running 0        50s 192.168.122.169 k8scpnode <none>         <none>
-kube-system  kube-proxy-pv7tj                  1/1   Running 0        39s 192.168.122.169 k8scpnode <none>         <none>
-kube-system  kube-scheduler-k8scpnode          1/1   Running 0        50s 192.168.122.169 k8scpnode <none>         <none>
+kube-system  weave-net-rj29l                   2/2   Running 1      3h39m 192.168.122.149 k8scpnode <none>         <none>
+kube-system  coredns-565d847f94-lg54q          1/1   Running 0        38s 10.32.0.2       k8scpnode <none>         <none>
+kube-system  coredns-565d847f94-ms8zk          1/1   Running 0        38s 10.32.0.3       k8scpnode <none>         <none>
+kube-system  etcd-k8scpnode                    1/1   Running 0        50s 192.168.122.149 k8scpnode <none>         <none>
+kube-system  kube-apiserver-k8scpnode          1/1   Running 0        50s 192.168.122.149 k8scpnode <none>         <none>
+kube-system  kube-controller-manager-k8scpnode 1/1   Running 0        50s 192.168.122.149 k8scpnode <none>         <none>
+kube-system  kube-proxy-pv7tj                  1/1   Running 0        39s 192.168.122.149 k8scpnode <none>         <none>
+kube-system  kube-scheduler-k8scpnode          1/1   Running 0        50s 192.168.122.149 k8scpnode <none>         <none>
 
 ```
 
@@ -536,14 +551,27 @@ To                         Action      From
 The next few steps are pretty much exactly the same as in the control-plane node.
 In order to keep this documentation short, I'll just copy/paste the commands.
 
+#### Weave Firewall in the workder nodes
+
+permit traffic & metrics
+
+```bash
+sudo ufw allow 6781:6782/tcp
+sudo ufw allow 6783
+sudo ufw allow 6784/udp
+
+sudo ufw status
+
+```
+
 ### Hosts file in the worker node
 
 Update the `/etc/hosts` file to include the IPs and hostname of all VMs.
 
 ```bash
-192.168.122.169  k8scpnode
-192.168.122.40   k8wrknode1
-192.168.122.8    k8wrknode2
+192.168.122.149  k8scpnode
+192.168.122.174  k8wrknode1
+192.168.122.243  k8wrknode2
 
 ```
 
@@ -636,13 +664,13 @@ and we will get the initial token that expires after 24hours.
 
 ```bash
 TOKEN                     TTL         EXPIRES                USAGES                   DESCRIPTION                                                EXTRA GROUPS
-zt36bp.uht4cziweef1jo1h   23h         2022-08-31T18:38:16Z   authentication,signing   The default bootstrap token generated by 'kubeadm init'.   system:bootstrappers:kubeadm:default-node-token
+or2jqe.r7uh6finztec4vgm   23h         2022-08-31T18:38:16Z   authentication,signing   The default bootstrap token generated by 'kubeadm init'.   system:bootstrappers:kubeadm:default-node-token
 
 ```
 
 In this case is the
 
-    zt36bp.uht4cziweef1jo1h
+    or2jqe.r7uh6finztec4vgm
 
 ### Get Certificate Hash from the control-plane node
 
@@ -656,7 +684,7 @@ openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outfor
 and in my k8s cluster is:
 
 ```bash
-a4833f8c82953370610efaa5ed93b791337232c3a948b710b2435d747889c085
+d306452ab5f05d68c0525468242a3ddd5df1627ebf1ca6915777cc462449ddeb
 ```
 
 ### Join Workers to the kubernetes cluster
@@ -665,9 +693,9 @@ So now, we can Join our worker nodes to the kubernetes cluster.
 Run the below command on both worker nodes:
 
 ```bash
-sudo kubeadm join 192.168.122.169:6443 \
-       --token zt36bp.uht4cziweef1jo1h \
-       --discovery-token-ca-cert-hash sha256:a4833f8c82953370610efaa5ed93b791337232c3a948b710b2435d747889c085
+sudo kubeadm join 192.168.122.149:6443 \
+       --token or2jqe.r7uh6finztec4vgm \
+       --discovery-token-ca-cert-hash sha256:d306452ab5f05d68c0525468242a3ddd5df1627ebf1ca6915777cc462449ddeb
 
 ```
 
@@ -687,25 +715,27 @@ kubectl get pods -A -o wide
 
 ```bash
 NAME         STATUS   ROLES           AGE     VERSION   INTERNAL-IP       EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
-k8scpnode    Ready    control-plane   64m     v1.25.0   192.168.122.169   <none>        Ubuntu 22.04.1 LTS   5.15.0-46-generic   containerd://1.6.8
-k8wrknode1   Ready    <none>          2m32s   v1.25.0   192.168.122.40    <none>        Ubuntu 22.04.1 LTS   5.15.0-46-generic   containerd://1.6.8
-k8wrknode2   Ready    <none>          2m28s   v1.25.0   192.168.122.8     <none>        Ubuntu 22.04.1 LTS   5.15.0-46-generic   containerd://1.6.8
+k8scpnode    Ready    control-plane   64m     v1.25.0   192.168.122.149   <none>        Ubuntu 22.04.1 LTS   5.15.0-46-generic   containerd://1.6.8
+k8wrknode1   Ready    <none>          2m32s   v1.25.0   192.168.122.174   <none>        Ubuntu 22.04.1 LTS   5.15.0-46-generic   containerd://1.6.8
+k8wrknode2   Ready    <none>          2m28s   v1.25.0   192.168.122.243   <none>        Ubuntu 22.04.1 LTS   5.15.0-46-generic   containerd://1.6.8
 ```
 
 ```bash
-NAMESPACE      NAME                                READY   STATUS    RESTARTS      AGE     IP                NODE         NOMINATED NODE   READINESS GATES
-kube-flannel   kube-flannel-ds-52g92               1/1     Running   0             2m32s   192.168.122.40    k8wrknode1   <none>           <none>
-kube-flannel   kube-flannel-ds-7qlm7               1/1     Running   0             2m28s   192.168.122.8     k8wrknode2   <none>           <none>
-kube-flannel   kube-flannel-ds-zqv2b               1/1     Running   0             64m     192.168.122.169   k8scpnode    <none>           <none>
-kube-system    coredns-565d847f94-lg54q            1/1     Running   0             64m     10.244.0.2        k8scpnode    <none>           <none>
-kube-system    coredns-565d847f94-ms8zk            1/1     Running   0             64m     10.244.0.3        k8scpnode    <none>           <none>
-kube-system    etcd-k8scpnode                      1/1     Running   0             64m     192.168.122.169   k8scpnode    <none>           <none>
-kube-system    kube-apiserver-k8scpnode            1/1     Running   0             64m     192.168.122.169   k8scpnode    <none>           <none>
-kube-system    kube-controller-manager-k8scpnode   1/1     Running   1 (12m ago)   64m     192.168.122.169   k8scpnode    <none>           <none>
-kube-system    kube-proxy-4khw6                    1/1     Running   0             2m32s   192.168.122.40    k8wrknode1   <none>           <none>
-kube-system    kube-proxy-gm27l                    1/1     Running   0             2m28s   192.168.122.8     k8wrknode2   <none>           <none>
-kube-system    kube-proxy-pv7tj                    1/1     Running   0             64m     192.168.122.169   k8scpnode    <none>           <none>
-kube-system    kube-scheduler-k8scpnode            1/1     Running   1 (12m ago)   64m     192.168.122.169   k8scpnode    <none>           <none>
+NAMESPACE      NAME                                READY   STATUS    RESTARTS  AGE     IP                NODE         NOMINATED NODE   READINESS GATES
+
+kube-system   weave-net-7nnv4                     2/2     Running   0          3h28m   192.168.122.243   k8wrknode2   <none>           <none>
+kube-system   weave-net-jnhx4                     2/2     Running   0          3h28m   192.168.122.174   k8wrknode1   <none>           <none>
+kube-system   weave-net-rj29l                     2/2     Running   1          3h30m   192.168.122.149   k8scpnode    <none>           <none>
+
+kube-system    coredns-565d847f94-lg54q           1/1     Running   0          64m     10.32.0.2         k8scpnode    <none>           <none>
+kube-system    coredns-565d847f94-ms8zk           1/1     Running   0          64m     10.32.0.3         k8scpnode    <none>           <none>
+kube-system    etcd-k8scpnode                     1/1     Running   0          64m     192.168.122.149   k8scpnode    <none>           <none>
+kube-system    kube-apiserver-k8scpnode           1/1     Running   0          64m     192.168.122.149   k8scpnode    <none>           <none>
+kube-system    kube-controller-manager-k8scpnode  1/1     Running   1          64m     192.168.122.149   k8scpnode    <none>           <none>
+kube-system    kube-proxy-4khw6                   1/1     Running   0          2m32s   192.168.122.174   k8wrknode1   <none>           <none>
+kube-system    kube-proxy-gm27l                   1/1     Running   0          2m28s   192.168.122.243   k8wrknode2   <none>           <none>
+kube-system    kube-proxy-pv7tj                   1/1     Running   0          64m     192.168.122.149   k8scpnode    <none>           <none>
+kube-system    kube-scheduler-k8scpnode           1/1     Running   1          64m     192.168.122.149   k8scpnode    <none>           <none>
 
 ```
 
@@ -719,377 +749,99 @@ Our **k8s cluster** is running.
 
 We can proceed by installing a k8s dashboard to our k8s cluster.
 
-### Install kubernetes dashboard
+### Install Weave Scope
 
-One simple way to install the kubernetes-dashboard, is by applying the latest (as of this writing) yaml configuration file.
+One simple way to install the Weave Scope, is by applying the latest (as of this writing) yaml configuration file.
 
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.6.1/aio/deploy/recommended.yaml
+SCOPE=v1.13.2
+kubectl apply -f https://github.com/weaveworks/scope/releases/download/${SCOPE}/k8s-scope.yaml
 
 ```
 
 the output of the above command should be something like
 
 ```bash
-
-namespace/kubernetes-dashboard created
-serviceaccount/kubernetes-dashboard created
-service/kubernetes-dashboard created
-secret/kubernetes-dashboard-certs created
-secret/kubernetes-dashboard-csrf created
-secret/kubernetes-dashboard-key-holder created
-configmap/kubernetes-dashboard-settings created
-role.rbac.authorization.k8s.io/kubernetes-dashboard created
-clusterrole.rbac.authorization.k8s.io/kubernetes-dashboard created
-rolebinding.rbac.authorization.k8s.io/kubernetes-dashboard created
-clusterrolebinding.rbac.authorization.k8s.io/kubernetes-dashboard created
-deployment.apps/kubernetes-dashboard created
-service/dashboard-metrics-scraper created
-deployment.apps/dashboard-metrics-scraper created
+namespace/weave created
+clusterrole.rbac.authorization.k8s.io/weave-scope created
+clusterrolebinding.rbac.authorization.k8s.io/weave-scope created
+deployment.apps/weave-scope-app created
+daemonset.apps/weave-scope-agent created
+deployment.apps/weave-scope-cluster-agent created
+serviceaccount/weave-scope created
+service/weave-scope-app created
 
 ```
 
 Verify the installation
 
 ```bash
-kubectl get all -n kubernetes-dashboard
+kubectl get all -o wide -n weave
 
 ```
 
 ```bash
-NAME                                             READY   STATUS    RESTARTS   AGE
-pod/dashboard-metrics-scraper-64bcc67c9c-kvll7   1/1     Running   0          2m16s
-pod/kubernetes-dashboard-66c887f759-rr4gn        1/1     Running   0          2m16s
+NAME                                             READY   STATUS    RESTARTS   AGE     IP                NODE         NOMINATED NODE   READINESS GATES
+pod/weave-scope-agent-gktkj                      1/1     Running   0          3m26s   192.168.122.174   k8wrknode1   <none>           <none>
+pod/weave-scope-agent-prp68                      1/1     Running   0          3m27s   192.168.122.149   k8scpnode    <none>           <none>
+pod/weave-scope-agent-tmbrg                      1/1     Running   0          3m26s   192.168.122.243   k8wrknode2   <none>           <none>
+pod/weave-scope-app-8ccc4d754-6xcdh              1/1     Running   0          3m27s   10.44.0.1         k8wrknode2   <none>           <none>
+pod/weave-scope-cluster-agent-59cc85cbcc-x4dvc   1/1     Running   0          3m26s   10.36.0.1         k8wrknode1   <none>           <none>
 
-NAME                                TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
-service/dashboard-metrics-scraper   ClusterIP   10.110.25.61    <none>        8000/TCP   2m16s
-service/kubernetes-dashboard        ClusterIP   10.100.65.122   <none>        443/TCP    2m16s
+NAME                      TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)   AGE     SELECTOR
+service/weave-scope-app   ClusterIP   10.101.147.223   <none>        80/TCP    3m26s   app=weave-scope,name=weave-scope-app,weave-cloud-component=scope,weave-scope-component=app
 
-NAME                                        READY   UP-TO-DATE   AVAILABLE   AGE
-deployment.apps/dashboard-metrics-scraper   1/1     1            1           2m16s
-deployment.apps/kubernetes-dashboard        1/1     1            1           2m16s
+NAME                               DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR   AGE     CONTAINERS    IMAGES                    SELECTOR
+daemonset.apps/weave-scope-agent   3         3         3       3            3           <none>          3m27s   scope-agent   weaveworks/scope:1.13.2   app=weave-scope
 
-NAME                                                   DESIRED   CURRENT   READY   AGE
-replicaset.apps/dashboard-metrics-scraper-64bcc67c9c   1         1         1       2m16s
-replicaset.apps/kubernetes-dashboard-66c887f759        1         1         1       2m16s
+NAME                                        READY   UP-TO-DATE   AVAILABLE   AGE     CONTAINERS            IMAGES                              SELECTOR
+deployment.apps/weave-scope-app             1/1     1            1           3m27s   app                   weaveworks/scope:1.13.2             app=weave-scope
+deployment.apps/weave-scope-cluster-agent   1/1     1            1           3m27s   scope-cluster-agent   docker.io/weaveworks/scope:1.13.2   app=weave-scope,name=weave-scope-cluster-agent,weave-cloud-component=scope,weave-scope-component=cluster-agent
+
+NAME                                                   DESIRED   CURRENT   READY   AGE     CONTAINERS            IMAGES                              SELECTOR
+replicaset.apps/weave-scope-app-8ccc4d754              1         1         1       3m27s   app                   weaveworks/scope:1.13.2             app=weave-scope,pod-template-hash=8ccc4d754
+replicaset.apps/weave-scope-cluster-agent-59cc85cbcc   1         1         1       3m27s   scope-cluster-agent   docker.io/weaveworks/scope:1.13.2   app=weave-scope,name=weave-scope-cluster-agent,pod-template-hash=59cc85cbcc,weave-cloud-component=scope,weave-scope-component=cluster-agent
 
 ```
 
-### Add a Node Port to kubernetes dashboard
+### Port-forward to access weave-scope-app
 
-Kubernetes Dashboard by default runs on a internal 10.x.x.x IP.
-
-To access the dashboard we need to have a NodePort in the kubernetes-dashboard service.
-
-We can either **Patch** the service or **edit** the yaml file.
-
-Choose one of these two ways, do not run both of them (unnecessary - not harmful)
-
-#### Patch kubernetes-dashboard
-
-This is one way to add a NodePort.
+Not a permament solution but a quick one to forward the internal Port: 80 to our control-plane node port 4040:
 
 ```bash
-kubectl --namespace kubernetes-dashboard patch svc kubernetes-dashboard -p '{"spec": {"type": "NodePort"}}'
+ kubectl port-forward svc/weave-scope-app -n weave 4040:80
+Forwarding from 127.0.0.1:4040 -> 4040
+Forwarding from [::1]:4040 -> 4040
+
+Handling connection for 4040
+Handling connection for 4040
 
 ```
 
-output
+### Port-forward to k8s cluster
+
+We need to port-forward the control-plane node's port: 4040 to our localhost via ssh:
 
 ```bash
-service/kubernetes-dashboard patched
+$ ssh -L:4040:127.0.0.1:4040 192.168.122.149 -l ubuntu
+Welcome to Ubuntu 22.04.1 LTS (GNU/Linux 5.15.0-48-generic x86_64)
 
 ```
 
-verify the service
+### Accessing Weave Scope
+
+Open a new tab on our browser and type:
 
 ```bash
-kubectl get svc -n kubernetes-dashboard
+http://127.0.0.1:4040
 
 ```
 
-```bash
-NAME                        TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)         AGE
-dashboard-metrics-scraper   ClusterIP   10.110.25.61    <none>        8000/TCP        11m
-kubernetes-dashboard        NodePort    10.100.65.122   <none>        443:32709/TCP   11m
+![k8s_weave_scope1.jpg](attachments/k8s_weave_scope1.jpg)
 
-```
 
-we can see the **30480** in the kubernetes-dashboard.
+![k8s_weave_scope2.jpg](attachments/k8s_weave_scope2.jpg)
 
-#### Edit kubernetes-dashboard Service
-
-This is an alternative way to add a NodePort.
-
-```bash
-kubectl edit svc -n kubernetes-dashboard kubernetes-dashboard
-
-```
-
-and chaning the service type from
-
-```bash
-type: ClusterIP
-```
-
-to
-
-```bash
-type: NodePort
-```
-
-### Accessing Kubernetes Dashboard
-
-The kubernetes-dashboard has two (2) pods, one (1) for metrics, one (2) for the dashboard.
-
-To access the dashboard, first we need to identify in which Node is running.
-
-```bash
-kubectl get pods -n kubernetes-dashboard -o wide
-
-```
-
-```bash
-NAME                                         READY   STATUS    RESTARTS   AGE     IP           NODE         NOMINATED NODE   READINESS GATES
-dashboard-metrics-scraper-64bcc67c9c-fs7pt   1/1     Running   0          2m43s   10.244.1.9   k8wrknode1   <none>           <none>
-kubernetes-dashboard-66c887f759-pzt4z        1/1     Running   0          2m44s   10.244.2.9   k8wrknode2   <none>           <none>
-
-```
-
-In my setup the dashboard pod is running on the **worker node 2** and from the `/etc/hosts` is on the **192.168.122.8** IP.
-
-The NodePort is **32709**
-
-```bash
-k get svc -n kubernetes-dashboard -o wide
-
-```
-
-So, we can open a new tab on our browser and type:
-
-```bash
-https://192.168.122.8:32709
-
-```
-
-and accept the self-signed certificate!
-
-![k8s_dashboard.jpg](attachments/317345a8.jpg)
-
-### Create An Authentication Token (RBAC)
-
-Last step for the kubernetes-dashboard is to create an authentication token.
-
-#### Creating a Service Account
-
-Create a new yaml file, with kind: **ServiceAccount** that has access to kubernetes-dashboard namespace and has name: admin-user.
-
-```bash
-cat > kubernetes-dashboard.ServiceAccount.yaml <<EOF
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: admin-user
-  namespace: kubernetes-dashboard
-
-EOF
-
-```
-
-add this service account to the k8s cluster
-
-```bash
-kubectl apply -f kubernetes-dashboard.ServiceAccount.yaml
-
-```
-
-output
-
-```bash
-serviceaccount/admin-user created
-```
-
-#### Creating a ClusterRoleBinding
-
-We need to bind the Service Account with the kubernetes-dashboard via Role-based access control.
-
-```bash
-cat > kubernetes-dashboard.ClusterRoleBinding.yaml <<EOF
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  name: admin-user
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: cluster-admin
-subjects:
-- kind: ServiceAccount
-  name: admin-user
-  namespace: kubernetes-dashboard
-
-EOF
-
-```
-
-apply this yaml file
-
-```bash
-kubectl apply -f kubernetes-dashboard.ClusterRoleBinding.yaml
-
-```
-
-```bash
-clusterrolebinding.rbac.authorization.k8s.io/admin-user created
-
-```
-
-That means, our Service Account User has all the necessary roles to access the kubernetes-dashboard.
-
-#### Getting a Bearer Token
-
-Final step is to create/get a token for our user.
-
-```bash
-kubectl -n kubernetes-dashboard create token admin-user
-
-```
-
-```bash
-eyJhbGciOiJSUzI1NiIsImtpZCI6Im04M2JOY2k1Yk1hbFBhLVN2cjA4X1pkdktXNldqWkR4bjB6MGpTdFgtVHcifQ.eyJhdWQiOlsiaHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNsdXN0ZXIubG9jYWwiXSwiZXhwIjoxNjYxOTU2NDQ1LCJpYXQiOjE2NjE5NTI4NDUsImlzcyI6Imh0dHBzOi8va3ViZXJuZXRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVyLmxvY2FsIiwia3ViZXJuZXRlcy5pbyI6eyJuYW1lc3BhY2UiOiJrdWJlcm5ldGVzLWRhc2hib2FyZCIsInNlcnZpY2VhY2NvdW50Ijp7Im5hbWUiOiJhZG1pbi11c2VyIiwidWlkIjoiN2M4OWIyZDktMGIwYS00ZDg4LTk2Y2EtZDU3NjhjOWU2ZGYxIn19LCJuYmYiOjE2NjE5NTI4NDUsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDprdWJlcm5ldGVzLWRhc2hib2FyZDphZG1pbi11c2VyIn0.RMRQkZZhcoC5vCvck6hKfqXJ4dfN4JoQyAaClHZvOMI6JgQZEfB2-_Qsh5MfFApJUEit-0TX9r3CzW3JqvB7dmpTPxUQvHK68r82WGveBVp1wF37UyXu_IzxiCQzpCWYr3GcVGAGZVBbhhqNYm765FV02ZA_khHrW3WpB80ikhm_TNLkOS6Llq2UiLFZyHHmjl5pwvGzT7YXZe8s-llZSgc0UenEwPG-82eE279oOy6r4_NltoV1HB3uu0YjUJPlkqAPnHuSfAA7-8A3XAAVHhRQvFPea1qZLc4-oD24AcU0FjWqDMILEyE8zaD2ci8zEQBMoxcf2qmj0wn9cfbZwQ
-
-```
-
-Add this token to the previous login page
-
-![k8s_token.jpg](attachments/4e1384ce.jpg)
-
-### Browsing Kubernetes Dashboard
-
-eg. Cluster --> Nodes
-
-![k8s_dashboard.jpg](attachments/3946b715.jpg)
-
-## Nginx App
-
-Before finishing this blog post, I would also like to share how to install a simple nginx-app as it is customary to do such thing in every new k8s cluster.
-
-But plz excuse me, I will not get into much details.
-You should be able to understand the below k8s commands.
-
-### Install nginx-app
-
-```bash
-kubectl create deployment nginx-app --image=nginx --replicas=2
-
-```
-
-```bash
-deployment.apps/nginx-app created
-```
-
-### Get Deployment
-
-```bash
-kubectl get deployment nginx-app -o wide
-```
-
-```bash
-NAME        READY   UP-TO-DATE   AVAILABLE   AGE   CONTAINERS   IMAGES   SELECTOR
-nginx-app   2/2     2            2           64s   nginx        nginx    app=nginx-app
-```
-
-### Expose Nginx-App
-
-```bash
-kubectl expose deployment nginx-app --type=NodePort --port=80
-
-```
-
-```bash
-service/nginx-app exposed
-```
-
-### Verify Service nginx-app
-
-```bash
-kubectl get svc nginx-app -o wide
-
-```
-
-```bash
-NAME        TYPE       CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE   SELECTOR
-nginx-app   NodePort   10.98.170.185   <none>        80:31761/TCP   27s   app=nginx-app
-
-```
-
-### Describe Service nginx-app
-
-```bash
-kubectl describe svc nginx-app
-
-```
-
-```bash
-Name:                     nginx-app
-Namespace:                default
-Labels:                   app=nginx-app
-Annotations:              <none>
-Selector:                 app=nginx-app
-Type:                     NodePort
-IP Family Policy:         SingleStack
-IP Families:              IPv4
-IP:                       10.98.170.185
-IPs:                      10.98.170.185
-Port:                     <unset>  80/TCP
-TargetPort:               80/TCP
-NodePort:                 <unset>  31761/TCP
-Endpoints:                10.244.1.10:80,10.244.2.10:80
-Session Affinity:         None
-External Traffic Policy:  Cluster
-Events:                   <none>
-
-
-```
-
-### Curl Nginx-App
-
-```bash
-curl http://192.168.122.8:31761
-
-```
-
-```bash
-<!DOCTYPE html>
-<html>
-<head>
-<title>Welcome to nginx!</title>
-<style>
-html { color-scheme: light dark; }
-body { width: 35em; margin: 0 auto;
-font-family: Tahoma, Verdana, Arial, sans-serif; }
-</style>
-</head>
-<body>
-<h1>Welcome to nginx!</h1>
-<p>If you see this page, the nginx web server is successfully installed and
-working. Further configuration is required.</p>
-
-<p>For online documentation and support please refer to
-<a href="http://nginx.org/">nginx.org</a>.<br/>
-Commercial support is available at
-<a href="http://nginx.com/">nginx.com</a>.</p>
-
-<p><em>Thank you for using nginx.</em></p>
-</body>
-</html>
-
-
-```
-
-### Nginx-App from Browser
-
-![k8s_nginx-app.jpg](attachments/88d4150c.jpg)
 
 ## That's it
 
