@@ -1,10 +1,10 @@
 resource "libvirt_domain" "domain-ubuntu" {
   for_each = local.VMs
 
-  name = each.value.hostname
+  name = each.value
 
-  memory = each.value.vmem
-  vcpu   = each.value.vcpu
+  memory = local.vmem
+  vcpu   = local.vcpu
 
   cloudinit = libvirt_cloudinit_disk.cloud-init[each.key].id
 

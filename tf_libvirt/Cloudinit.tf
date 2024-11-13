@@ -9,10 +9,10 @@ data "template_file" "user_data" {
 
   template = file("templates/user-data.yml")
   vars = {
-    hostname = each.value.hostname
-    sshdport = each.value.ssh_port
-    timezone = each.value.timezone
-    gh_user  = each.value.gh_user
+    hostname = each.value
+    sshdport = local.ssh_port
+    timezone = local.timezone
+    gh_user  = local.gh_user
   }
 }
 
