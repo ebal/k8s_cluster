@@ -1,5 +1,5 @@
 locals {
-    # cloud_image = "https://cloud-images.ubuntu.com/jammy/current/oracular-server-cloudimg-amd64.img"
+    # cloud_image = "https://cloud-images.ubuntu.com/oracular/current/oracular-server-cloudimg-amd64.img"
     cloud_image = "../../../images/ubuntu/oracular-server-cloudimg-amd64.img"
 
     # Virtual Machines

@@ -1,84 +1,102 @@
-# Creating a kubernetes cluster with kubeadm on Ubuntu 22.04 LTS
+# Creating a kubernetes cluster with kubeadm on Ubuntu 24.04 LTS
 
-> [Kubernetes](https://kubernetes.io/), also known as **K8s**, is an open-source system for automating deployment, scaling, and management of containerized applications.
+> [Kubernetes](https://kubernetes.io/), also known as **k8s**, is an open-source system for automating deployment, scaling, and management of containerized applications.
 
-***Notice*** The initial blog post is here: [blog post](https://balaskas.gr/blog/2022/08/31/creating-a-kubernetes-cluster-with-kubeadm-on-ubuntu-2204-lts/)
+***Notice*** The initial (old) blog post with ubuntu 22.04 is (still) here: [blog post](https://balaskas.gr/blog/2022/08/31/creating-a-kubernetes-cluster-with-kubeadm-on-ubuntu-2204-lts/)
 
 <!-- toc -->
 
 - [Prerequisites](#Prerequisites)
+  * [Streamline the lab environment](#Streamline-the-lab-environment)
 - [Git Terraform Code for the kubernetes cluster](#Git-Terraform-Code-for-the-kubernetes-cluster)
-  - [Initilaze the working directory](#Initilaze-the-working-directory)
-  - [Ubuntu 22.04 Image](#Ubuntu-2204-Image)
-  - [Spawn the VMs](#Spawn-the-VMs)
+  * [Initilaze the working directory](#Initilaze-the-working-directory)
+  * [Ubuntu 24.04 Image](#Ubuntu-2404-Image)
+  * [Spawn the VMs](#Spawn-the-VMs)
 - [Control-Plane Node](#Control-Plane-Node)
-  - [Ports on the control-plane node](#Ports-on-the-control-plane-node)
-  - [Firewall on the control-plane node](#Firewall-on-the-control-plane-node)
-  - [Hosts file in the control-plane node](#Hosts-file-in-the-control-plane-node)
-    - [Updating your hosts file](#Updating-your-hosts-file)
-  - [No Swap on the control-plane node](#No-Swap-on-the-control-plane-node)
-  - [Kernel modules on the control-plane node](#Kernel-modules-on-the-control-plane-node)
-  - [NeedRestart on the control-plane node](#NeedRestart-on-the-control-plane-node)
-    - [temporarily](#temporarily)
-    - [permanently](#permanently)
-  - [Installing a Container Runtime on the control-plane node](#Installing-a-Container-Runtime-on-the-control-plane-node)
-  - [Installing kubeadm, kubelet and kubectl on the control-plane node](#Installing-kubeadm-kubelet-and-kubectl-on-the-control-plane-node)
-  - [Initializing the control-plane node](#Initializing-the-control-plane-node)
-  - [Create user access config to the k8s control-plane node](#Create-user-access-config-to-the-k8s-control-plane-node)
-  - [Verify the control-plane node](#Verify-the-control-plane-node)
-  - [Install an overlay network provider on the control-plane node](#Install-an-overlay-network-provider-on-the-control-plane-node)
-  - [Verify CoreDNS is running on the control-plane node](#Verify-CoreDNS-is-running-on-the-control-plane-node)
+  * [Ports on the control-plane node](#Ports-on-the-control-plane-node)
+  * [Firewall on the control-plane node](#Firewall-on-the-control-plane-node)
+  * [Hosts file in the control-plane node](#Hosts-file-in-the-control-plane-node)
+    + [Updating your hosts file](#Updating-your-hosts-file)
+  * [No Swap on the control-plane node](#No-Swap-on-the-control-plane-node)
+  * [Kernel modules on the control-plane node](#Kernel-modules-on-the-control-plane-node)
+  * [NeedRestart on the control-plane node](#NeedRestart-on-the-control-plane-node)
+    + [temporarily](#temporarily)
+    + [permanently](#permanently)
+  * [Installing a Container Runtime on the control-plane node](#Installing-a-Container-Runtime-on-the-control-plane-node)
+  * [Installing kubeadm, kubelet and kubectl on the control-plane node](#Installing-kubeadm-kubelet-and-kubectl-on-the-control-plane-node)
+  * [Get kubernetes admin configuration images](#Get-kubernetes-admin-configuration-images)
+  * [Initializing the control-plane node](#Initializing-the-control-plane-node)
+  * [Create user access config to the k8s control-plane node](#Create-user-access-config-to-the-k8s-control-plane-node)
+  * [Verify the control-plane node](#Verify-the-control-plane-node)
+  * [Install an overlay network provider on the control-plane node](#Install-an-overlay-network-provider-on-the-control-plane-node)
+  * [Verify CoreDNS is running on the control-plane node](#Verify-CoreDNS-is-running-on-the-control-plane-node)
 - [Worker Nodes](#Worker-Nodes)
-  - [Ports on the worker nodes](#Ports-on-the-worker-nodes)
-  - [Firewall on the worker nodes](#Firewall-on-the-worker-nodes)
-  - [Hosts file in the worker node](#Hosts-file-in-the-worker-node)
-  - [No Swap on the worker node](#No-Swap-on-the-worker-node)
-  - [Kernel modules on the worker node](#Kernel-modules-on-the-worker-node)
-  - [NeedRestart on the worker node](#NeedRestart-on-the-worker-node)
-  - [Installing a Container Runtime on the worker node](#Installing-a-Container-Runtime-on-the-worker-node)
-  - [Installing kubeadm, kubelet and kubectl on the worker node](#Installing-kubeadm-kubelet-and-kubectl-on-the-worker-node)
-  - [Get Token from the control-plane node](#Get-Token-from-the-control-plane-node)
-  - [Get Certificate Hash from the control-plane node](#Get-Certificate-Hash-from-the-control-plane-node)
-  - [Join Workers to the kubernetes cluster](#Join-Workers-to-the-kubernetes-cluster)
+  * [Ports on the worker nodes](#Ports-on-the-worker-nodes)
+  * [Firewall on the worker nodes](#Firewall-on-the-worker-nodes)
+  * [Hosts file in the worker node](#Hosts-file-in-the-worker-node)
+  * [No Swap on the worker node](#No-Swap-on-the-worker-node)
+  * [Kernel modules on the worker node](#Kernel-modules-on-the-worker-node)
+  * [NeedRestart on the worker node](#NeedRestart-on-the-worker-node)
+  * [Installing a Container Runtime on the worker node](#Installing-a-Container-Runtime-on-the-worker-node)
+  * [Installing kubeadm, kubelet and kubectl on the worker node](#Installing-kubeadm-kubelet-and-kubectl-on-the-worker-node)
+- [Get Token from the control-plane node](#Get-Token-from-the-control-plane-node)
+  * [Get Certificate Hash from the control-plane node](#Get-Certificate-Hash-from-the-control-plane-node)
+  * [Join Workers to the kubernetes cluster](#Join-Workers-to-the-kubernetes-cluster)
 - [Is the kubernetes cluster running ?](#Is-the-kubernetes-cluster-running-)
+  * [All nodes have successfully joined the Kubernetes cluster](#All-nodes-have-successfully-joined-the-Kubernetes-cluster)
+  * [All pods](#All-pods)
 - [Kubernetes Dashboard](#Kubernetes-Dashboard)
-  - [Install kubernetes dashboard](#Install-kubernetes-dashboard)
-  - [Add a Node Port to kubernetes dashboard](#Add-a-Node-Port-to-kubernetes-dashboard)
-    - [Patch kubernetes-dashboard](#Patch-kubernetes-dashboard)
-    - [Edit kubernetes-dashboard Service](#Edit-kubernetes-dashboard-Service)
-  - [Accessing Kubernetes Dashboard](#Accessing-Kubernetes-Dashboard)
-  - [Create An Authentication Token (RBAC)](#Create-An-Authentication-Token-RBAC)
-    - [Creating a Service Account](#Creating-a-Service-Account)
-    - [Creating a ClusterRoleBinding](#Creating-a-ClusterRoleBinding)
-    - [Getting a Bearer Token](#Getting-a-Bearer-Token)
-  - [Browsing Kubernetes Dashboard](#Browsing-Kubernetes-Dashboard)
+  * [Helm](#Helm)
+  * [Install kubernetes dashboard](#Install-kubernetes-dashboard)
+  * [Accessing Dashboard via a NodePort](#Accessing-Dashboard-via-a-NodePort)
+    + [Patch kubernetes-dashboard](#Patch-kubernetes-dashboard)
+    + [Edit kubernetes-dashboard Service](#Edit-kubernetes-dashboard-Service)
+  * [Accessing Kubernetes Dashboard](#Accessing-Kubernetes-Dashboard)
+  * [Create An Authentication Token (RBAC)](#Create-An-Authentication-Token-RBAC)
+    + [Creating a Service Account](#Creating-a-Service-Account)
+    + [Creating a ClusterRoleBinding](#Creating-a-ClusterRoleBinding)
+    + [Getting a Bearer Token](#Getting-a-Bearer-Token)
+  * [Browsing Kubernetes Dashboard](#Browsing-Kubernetes-Dashboard)
 - [Nginx App](#Nginx-App)
-  - [Install nginx-app](#Install-nginx-app)
-  - [Get Deployment](#Get-Deployment)
-  - [Expose Nginx-App](#Expose-Nginx-App)
-  - [Verify Service nginx-app](#Verify-Service-nginx-app)
-  - [Describe Service nginx-app](#Describe-Service-nginx-app)
-  - [Curl Nginx-App](#Curl-Nginx-App)
-  - [Nginx-App from Browser](#Nginx-App-from-Browser)
-- [That's it !](#Thats-it-)
+  * [Install nginx-app](#Install-nginx-app)
+  * [Get Deployment](#Get-Deployment)
+  * [Expose Nginx-App](#Expose-Nginx-App)
+  * [Verify Service nginx-app](#Verify-Service-nginx-app)
+  * [Describe Service nginx-app](#Describe-Service-nginx-app)
+  * [Curl Nginx-App](#Curl-Nginx-App)
+  * [Nginx-App from Browser](#Nginx-App-from-Browser)
+  * [Change the default page](#Change-the-default-page)
+- [That's it](#Thats-it)
+  * [destroy our lab](#destroy-our-lab)
 
 <!-- tocstop -->
 
-In this blog post, I'll try to share my personal notes on how to setup a kubernetes cluster with **kubeadm** on ubuntu 22.04 LTS Virtual Machines.
+In this blog post, I’ll share my personal notes on setting up a kubernetes cluster using **kubeadm** on Ubuntu 24.04 LTS Virtual Machines.
 
-I am going to use three (3) Virtual Machines in my local lab. My home lab is based on [libvirt](https://libvirt.org/) Qemu/KVM (Kernel-based Virtual Machine) and I run [Terraform](https://terraform.io) as the infrastructure provision tool.
+For this setup, I will use three (3) Virtual Machines in my local lab. My home lab is built on libvirt with QEMU/KVM (Kernel-based Virtual Machine), and I use Terraform as the infrastructure provisioning tool.
 
 ## Prerequisites
 
-- at least 3 Virtual Machines of Ubuntu 22.04 (one for control-plane, two for worker nodes)
+- at least 3 Virtual Machines of Ubuntu 24.04 (one for control-plane, two for worker nodes)
 - 2GB (or more) of RAM on each Virtual Machine
 - 2 CPUs (or more) on each Virtual Machine
 - 20Gb of hard disk on each Virtual Machine
 - No SWAP partition/image/file on each Virtual Machine
 
+### Streamline the lab environment
+
+To simplify the Terraform code for the libvirt/QEMU Kubernetes lab, I’ve made a few adjustments so that all of the VMs use the below default values:
+
+- ssh port: 22/TCP
+- volume size: 40G
+- memory: 4096
+- cpu: 4
+
+Review the values and adjust them according to your requirements and limitations.
+
 ## Git Terraform Code for the kubernetes cluster
 
-I prefer to have a reproducible infrastructure, so I can very fast create and destroy my test lab. My preferable way of doing things is testing on each step, so I pretty much destroy everything, coping and pasting commands and keep on. I use terraform for the create the infrastructure. You can find the code for the entire kubernetes cluster here: [k8s cluster - Terraform code](https://github.com/ebal/k8s_cluster/tree/main/tf_libvirt).
+I prefer maintaining a reproducible infrastructure so that I can quickly create and destroy my test lab. My approach involves testing each step, so I often destroy everything, copy and paste commands, and move forward. I use Terraform to provision the infrastructure. You can find the full Terraform code for the Kubernetes cluster here: [k8s cluster - Terraform code](https://github.com/ebal/k8s_cluster/tree/main/tf_libvirt).
 
 > If you do not use terraform, skip this step!
 
@@ -104,25 +122,25 @@ terraform init
 
 ```
 
-### Ubuntu 22.04 Image
+### Ubuntu 24.04 Image
 
-Before going forward with spawning the VMs, we need to have the ubuntu 22.04 image on our system, or change the code to get it from the internet.
+Before proceeding with creating the VMs, we need to ensure that the Ubuntu 24.04 image is available on our system, or modify the code to download it from the internet.
 
 In **Variables.tf** terraform file, you will notice the below entries
 
-```bash
+```yaml
 # The image source of the VM
-# cloud_image = "https://cloud-images.ubuntu.com/jammy/current/focal-server-cloudimg-amd64.img"
-cloud_image = "../jammy-server-cloudimg-amd64.img"
+# cloud_image = "https://cloud-images.ubuntu.com/oracular/current/focal-server-cloudimg-amd64.img"
+cloud_image = "../oracular-server-cloudimg-amd64.img"
 
 ```
 
-If you do not want to download the Ubuntu 22.04 cloud server image then make the below change
+If you do not want to download the Ubuntu 24.04 cloud server image then make the below change
 
-```bash
+```yaml
 # The image source of the VM
-cloud_image = "https://cloud-images.ubuntu.com/jammy/current/focal-server-cloudimg-amd64.img"
-#cloud_image = "../jammy-server-cloudimg-amd64.img"
+cloud_image = "https://cloud-images.ubuntu.com/oracular/current/focal-server-cloudimg-amd64.img"
+# cloud_image = "../oracular-server-cloudimg-amd64.img"
 
 ```
 
@@ -130,10 +148,11 @@ otherwise you need to download it, in the upper directory, to speed things up
 
 ```bash
 cd ../
-curl -sLO https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img
+IMAGE="oracular" # 24.04
+curl -sLO https://cloud-images.ubuntu.com/${IMAGE}/current/${IMAGE}-server-cloudimg-amd64.img
 cd -
 
-ls -l ../jammy-server-cloudimg-amd64.img
+ls -l ../oracular-server-cloudimg-amd64.img
 
 ```
 
@@ -148,16 +167,16 @@ We are ready to spawn our 3 VMs by running `terraform plan` & `terraform apply`
 
 output should be something like:
 
-```bash
+```
 ...
 Apply complete! Resources: 16 added, 0 changed, 0 destroyed.
 
 Outputs:
 
 VMs = [
-  "192.168.122.169  k8scpnode",
-  "192.168.122.40   k8wrknode1",
-  "192.168.122.8    k8wrknode2",
+  "192.168.122.223 k8scpnode1",
+  "192.168.122.50  k8swrknode1",
+  "192.168.122.10  k8swrknode2",
 ]
 
 ```
@@ -167,17 +186,17 @@ Verify that you have ssh access to the VMs
 eg.
 
 ```bash
-ssh  -l ubuntu 192.168.122.169
+ssh ubuntu@192.168.122.223
 
 ```
 
-replace the IP with what the output gave you.
+Replace the IP with the one provided in the output.
 
-***DISCLAIMER*** if something failed, destroy everything with `./destroy.sh` to remove any garbages before run `./start.sh` again !!!
+***DISCLAIMER*** if something failed, destroy everything with `./destroy.sh` to remove any garbages before run `./start.sh` again!!
 
 ## Control-Plane Node
 
-Let's us now start the configure of the k8s control-plane node.
+Let’s now begin configuring the Kubernetes control-plane node.
 
 ### Ports on the control-plane node
 
@@ -192,7 +211,7 @@ Kubernetes runs a few services that needs to be accessable from the worker nodes
 | TCP      | Inbound   | 10257      | kube-controller-manager | Self                 |
 
 Although etcd ports are included in control plane section, you can also host your
-own etcd cluster externally or on custom ports.
+own **etcd** cluster externally or on custom ports.
 
 ### Firewall on the control-plane node
 
@@ -205,14 +224,14 @@ sudo ufw allow 10250/tcp
 sudo ufw allow 10259/tcp
 sudo ufw allow 10257/tcp
 
-#sudo ufw disable
+# sudo ufw disable
 sudo ufw status
 
 ```
 
 the output should be
 
-```bash
+```
 To                         Action      From
 --                         ------      ----
 22/tcp                     ALLOW       Anywhere
@@ -227,7 +246,6 @@ To                         Action      From
 10250/tcp (v6)             ALLOW       Anywhere (v6)
 10259/tcp (v6)             ALLOW       Anywhere (v6)
 10257/tcp (v6)             ALLOW       Anywhere (v6)
-
 ```
 
 ### Hosts file in the control-plane node
@@ -245,11 +263,10 @@ To include all the VMs' IPs and hostnames.
 
 If you already know them, then your `/etc/hosts` file should look like this:
 
-```bash
-192.168.122.169  k8scpnode
-192.168.122.40   k8wrknode1
-192.168.122.8    k8wrknode2
-
+```
+192.168.122.223 k8scpnode1
+192.168.122.50  k8swrknode1
+192.168.122.10  k8swrknode2
 ```
 
 replace the IPs to yours.
@@ -261,9 +278,9 @@ if you already the IPs of your VMs, run the below script to ALL 3 VMs
 ```bash
 sudo tee -a /etc/hosts <<EOF
 
-192.168.122.169  k8scpnode
-192.168.122.40   k8wrknode1
-192.168.122.8    k8wrknode2
+192.168.122.223 k8scpnode1
+192.168.122.50  k8swrknode1
+192.168.122.10  k8swrknode2
 EOF
 
 ```
@@ -350,11 +367,11 @@ It is time to choose which container runtime we are going to use on our k8s clus
 ```bash
 curl -sL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/docker-keyring.gpg
 
-sudo apt-add-repository -y "deb https://download.docker.com/linux/ubuntu jammy stable"
+sudo apt-add-repository -y "deb https://download.docker.com/linux/ubuntu oracular stable"
 
-sleep 5
+sleep 3
 
-sudo apt -y install containerd.io
+sudo apt-get -y install containerd.io
 
 containerd config default                              \
  | sed 's/SystemdCgroup = false/SystemdCgroup = true/' \
@@ -364,32 +381,57 @@ sudo systemctl restart containerd.service
 
 ```
 
-We have also enabled the
+You can find the containerd configuration file here:
+    /etc/containerd/config.toml
 
-    systemd cgroup driver
 
-so the control-plane node can use the cgroup v2 features.
+In earlier versions of ubuntu we should enable the `systemd cgroup driver`.
+Recomendation from official documentation is:
+> It is best to use cgroup v2, use the systemd cgroup driver instead of cgroupfs.
+
+Starting with v1.22 and later, when creating a cluster with kubeadm, if the user does not set the cgroupDriver field under KubeletConfiguration, kubeadm defaults it to systemd.
 
 ### Installing kubeadm, kubelet and kubectl on the control-plane node
 
 Install the kubernetes packages (kubedam, kubelet and kubectl) by first adding the k8s repository on our virtual machine. To speed up the next step, we will also download the configuration container images.
 
+This guide is using kubeadm, so we need to check the latest version.
+
+Kubernetes v1.31 is the latest version when this guide was written.
+
 ```bash
-sudo curl -sLo /etc/apt/trusted.gpg.d/kubernetes-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+VERSION="1.31"
 
-sudo apt-add-repository -y "deb http://apt.kubernetes.io/ kubernetes-xenial main"
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v${VERSION}/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 
-sleep 5
+# allow unprivileged APT programs to read this keyring
+sudo chmod 0644 /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 
-sudo apt install -y kubelet kubeadm kubectl
+# This overwrites any existing configuration in /etc/apt/sources.list.d/kubernetes.list
+echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v${VERSION}/deb/ /" | sudo tee /etc/apt/sources.list.d/kubernetes.list
 
+# helps tools such as command-not-found to work correctly
+sudo chmod 0644 /etc/apt/sources.list.d/kubernetes.list
+
+sleep 2
+
+sudo apt-get update
+sudo apt-get install -y kubelet kubeadm kubectl
+
+```
+
+### Get kubernetes admin configuration images
+
+Retrieve the Kubernetes admin configuration images.
+
+```bash
 sudo kubeadm config images pull
 
 ```
 
 ### Initializing the control-plane node
 
-We can now initialize our control-plane node for our kubernetes cluster.
+We can now proceed with initializing the control-plane node for our Kubernetes cluster.
 
 There are a few things we need to be careful about:
 
@@ -415,7 +457,6 @@ The **kubectl** reads a configuration file (that has the token), so we copying t
 
 ```bash
 rm -rf $HOME/.kube
-
 mkdir -p $HOME/.kube
 
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
@@ -424,7 +465,8 @@ sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
 ls -la $HOME/.kube/config
 
-alias k="kubectl"
+echo 'alias k="kubectl"' | sudo tee -a /etc/bash.bashrc
+source /etc/bash.bashrc
 
 ```
 
@@ -436,9 +478,10 @@ That means we have a k8s cluster - but only the control-plane node is running.
 
 ```bash
 kubectl cluster-info
-#kubectl cluster-info dump
+# kubectl cluster-info dump
 
-k get nodes -o wide; k get pods  -A -o wide
+kubectl get nodes   -o wide
+kubectl get pods -A -o wide
 
 ```
 
@@ -446,10 +489,19 @@ k get nodes -o wide; k get pods  -A -o wide
 
 As I mentioned above, in order to use the DNS and Service Discovery services in the kubernetes (CoreDNS) we need to install a Container Network Interface (CNI) based Pod network add-on so that your Pods can communicate with each other.
 
-We will use **[flannel](https://github.com/flannel-io/flannel)** as the simplest of them.
+Kubernetes **[Flannel](https://github.com/flannel-io/flannel)** is a popular network overlay solution for Kubernetes clusters, primarily used to enable networking between pods across different nodes. It's a simple and easy-to-implement network fabric that uses the VXLAN protocol to create a flat virtual network, allowing Kubernetes pods to communicate with each other across different hosts.
+
+Make sure to open the below udp ports for flannel’s VXLAN traffic (if you are going to use it):
 
 ```bash
-k apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+sudo ufw allow 8472/udp
+
+```
+
+To install Flannel as the networking solution for your Kubernetes (K8s) cluster, run the following command to deploy Flannel:
+
+```bash
+k apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
 
 ```
 
@@ -463,8 +515,8 @@ k get nodes -o wide
 ```
 
 ```bash
-NAME        STATUS   ROLES           AGE   VERSION   INTERNAL-IP       EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
-k8scpnode   Ready    control-plane   54s   v1.25.0   192.168.122.169   <none>        Ubuntu 22.04.1 LTS   5.15.0-46-generic   containerd://1.6.8
+NAME        STATUS  ROLES          AGE  VERSION  INTERNAL-IP      EXTERNAL-IP  OS-IMAGE      KERNEL-VERSION    CONTAINER-RUNTIME
+k8scpnode1  Ready   control-plane  12m  v1.31.3  192.168.122.223  <none>       Ubuntu 24.10  6.11.0-9-generic  containerd://1.7.23
 
 ```
 
@@ -474,38 +526,45 @@ k get pods -A -o wide
 ```
 
 ```bash
-NAMESPACE    NAME                              READY STATUS  RESTARTS AGE IP              NODE      NOMINATED NODE READINESS GATES
-kube-flannel kube-flannel-ds-zqv2b             1/1   Running 0        36s 192.168.122.169 k8scpnode <none>         <none>
-kube-system  coredns-565d847f94-lg54q          1/1   Running 0        38s 10.244.0.2      k8scpnode <none>         <none>
-kube-system  coredns-565d847f94-ms8zk          1/1   Running 0        38s 10.244.0.3      k8scpnode <none>         <none>
-kube-system  etcd-k8scpnode                    1/1   Running 0        50s 192.168.122.169 k8scpnode <none>         <none>
-kube-system  kube-apiserver-k8scpnode          1/1   Running 0        50s 192.168.122.169 k8scpnode <none>         <none>
-kube-system  kube-controller-manager-k8scpnode 1/1   Running 0        50s 192.168.122.169 k8scpnode <none>         <none>
-kube-system  kube-proxy-pv7tj                  1/1   Running 0        39s 192.168.122.169 k8scpnode <none>         <none>
-kube-system  kube-scheduler-k8scpnode          1/1   Running 0        50s 192.168.122.169 k8scpnode <none>         <none>
+NAMESPACE     NAME                                READY  STATUS   RESTARTS  AGE    IP               NODE        NOMINATED NODE  READINESS GATES
+kube-flannel  kube-flannel-ds-9v8fq               1/1    Running  0         2m17s  192.168.122.223  k8scpnode1  <none>          <none>
+kube-system   coredns-7c65d6cfc9-dg6nq            1/1    Running  0         12m    10.244.0.2       k8scpnode1  <none>          <none>
+kube-system   coredns-7c65d6cfc9-r4ksc            1/1    Running  0         12m    10.244.0.3       k8scpnode1  <none>          <none>
+kube-system   etcd-k8scpnode1                     1/1    Running  0         13m    192.168.122.223  k8scpnode1  <none>          <none>
+kube-system   kube-apiserver-k8scpnode1           1/1    Running  0         12m    192.168.122.223  k8scpnode1  <none>          <none>
+kube-system   kube-controller-manager-k8scpnode1  1/1    Running  0         12m    192.168.122.223  k8scpnode1  <none>          <none>
+kube-system   kube-proxy-sxtk9                    1/1    Running  0         12m    192.168.122.223  k8scpnode1  <none>          <none>
+kube-system   kube-scheduler-k8scpnode1           1/1    Running  0         13m    192.168.122.223  k8scpnode1  <none>          <none>
 
 ```
 
-<br>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
 
-That's it with the control-plane node !
+<p>
+  That's it with the control-plane node !
+</p>
 
-<br>
+---
+
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
 
 ## Worker Nodes
 
-The below instructions works pretty much the same on both worker nodes.
-
-I will document the steps for the worker1 node but do the same for the worker2 node.
+The following instructions apply similarly to both worker nodes. I will document the steps for the **k8swrknode1** node, but please follow the same process for the **k8swrknode2** node.
 
 ### Ports on the worker nodes
 
 As we learned above on the control-plane section, kubernetes runs a few services
 
-| Protocol | Direction | Port Range  | Purpose           | Used By             |
-|----------|-----------|-------------|-------------------|---------------------|
-| TCP      | Inbound   | 10250       | Kubelet API       | Self, Control plane |
-| TCP      | Inbound   | 30000-32767 | NodePort Services | All                 |
+| Protocol | Direction | Port Range  | Purpose           | Used By              |
+|----------|-----------|-------------|-------------------|----------------------|
+| TCP      | Inbound   | 10250       | Kubelet API       | Self, Control plane  |
+| TCP      | Inbound   | 10256       | kube-proxy        | Self, Load balancers |
+| TCP      | Inbound   | 30000-32767 | NodePort Services | All                  |
 
 ### Firewall on the worker nodes
 
@@ -513,15 +572,16 @@ so we need to open the necessary ports on the worker nodes too.
 
 ```bash
 sudo ufw allow 10250/tcp
+sudo ufw allow 10256/tcp
 sudo ufw allow 30000:32767/tcp
 
 sudo ufw status
 
 ```
 
-output should look like
+The output should appear as follows:
 
-```bash
+```
 To                         Action      From
 --                         ------      ----
 22/tcp                     ALLOW       Anywhere
@@ -530,6 +590,12 @@ To                         Action      From
 22/tcp (v6)                ALLOW       Anywhere (v6)
 10250/tcp (v6)             ALLOW       Anywhere (v6)
 30000:32767/tcp (v6)       ALLOW       Anywhere (v6)
+```
+
+and do not forget, we also need to open UDP 8472 for flannel
+
+```bash
+sudo ufw allow 8472/udp
 
 ```
 
@@ -541,9 +607,9 @@ In order to keep this documentation short, I'll just copy/paste the commands.
 Update the `/etc/hosts` file to include the IPs and hostname of all VMs.
 
 ```bash
-192.168.122.169  k8scpnode
-192.168.122.40   k8wrknode1
-192.168.122.8    k8wrknode2
+192.168.122.223 k8scpnode1
+192.168.122.50  k8swrknode1
+192.168.122.10  k8swrknode2
 
 ```
 
@@ -589,11 +655,11 @@ export -p NEEDRESTART_MODE="a"
 ```bash
 curl -sL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/docker-keyring.gpg
 
-sudo apt-add-repository -y "deb https://download.docker.com/linux/ubuntu jammy stable"
+sudo apt-add-repository -y "deb https://download.docker.com/linux/ubuntu oracular stable"
 
-sleep 5
+sleep 3
 
-sudo apt -y install containerd.io
+sudo apt-get -y install containerd.io
 
 containerd config default                              \
  | sed 's/SystemdCgroup = false/SystemdCgroup = true/' \
@@ -606,17 +672,27 @@ sudo systemctl restart containerd.service
 ### Installing kubeadm, kubelet and kubectl on the worker node
 
 ```bash
-sudo curl -sLo /etc/apt/trusted.gpg.d/kubernetes-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+VERSION="1.31"
 
-sudo apt-add-repository -y "deb http://apt.kubernetes.io/ kubernetes-xenial main"
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v${VERSION}/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 
-sleep 5
+# allow unprivileged APT programs to read this keyring
+sudo chmod 0644 /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 
-sudo apt install -y kubelet kubeadm kubectl
+# This overwrites any existing configuration in /etc/apt/sources.list.d/kubernetes.list
+echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v${VERSION}/deb/ /" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+
+# helps tools such as command-not-found to work correctly
+sudo chmod 0644 /etc/apt/sources.list.d/kubernetes.list
+
+sleep 3
+
+sudo apt-get update
+sudo apt-get install -y kubelet kubeadm kubectl
 
 ```
 
-### Get Token from the control-plane node
+## Get Token from the control-plane node
 
 To join nodes to the kubernetes cluster, we need to have a couple of things.
 
@@ -628,21 +704,20 @@ If you didnt keep the output the initialization of the control-plane node, that'
 Run the below command in the control-plane node.
 
 ```bash
-sudo kubeadm  token list
+sudo kubeadm token list
 
 ```
 
 and we will get the initial token that expires after 24hours.
 
-```bash
-TOKEN                     TTL         EXPIRES                USAGES                   DESCRIPTION                                                EXTRA GROUPS
-zt36bp.uht4cziweef1jo1h   23h         2022-08-31T18:38:16Z   authentication,signing   The default bootstrap token generated by 'kubeadm init'.   system:bootstrappers:kubeadm:default-node-token
-
+```
+TOKEN                    TTL  EXPIRES               USAGES                  DESCRIPTION                                               EXTRA GROUPS
+7n4iwm.8xqwfcu4i1co8nof  23h  2024-11-26T12:14:55Z  authentication,signing  The default bootstrap token generated by 'kubeadm init'.  system:bootstrappers:kubeadm:default-node-token
 ```
 
 In this case is the
 
-    zt36bp.uht4cziweef1jo1h
+    7n4iwm.8xqwfcu4i1co8nof
 
 ### Get Certificate Hash from the control-plane node
 
@@ -655,9 +730,7 @@ openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outfor
 
 and in my k8s cluster is:
 
-```bash
-a4833f8c82953370610efaa5ed93b791337232c3a948b710b2435d747889c085
-```
+    2f68e4b27cae2d2a6431f3da308a691d00d9ef3baa4677249e43b3100d783061
 
 ### Join Workers to the kubernetes cluster
 
@@ -665,9 +738,9 @@ So now, we can Join our worker nodes to the kubernetes cluster.
 Run the below command on both worker nodes:
 
 ```bash
-sudo kubeadm join 192.168.122.169:6443 \
-       --token zt36bp.uht4cziweef1jo1h \
-       --discovery-token-ca-cert-hash sha256:a4833f8c82953370610efaa5ed93b791337232c3a948b710b2435d747889c085
+sudo kubeadm join 192.168.122.223:6443  \
+        --token 7n4iwm.8xqwfcu4i1co8nof \
+        --discovery-token-ca-cert-hash sha256:2f68e4b27cae2d2a6431f3da308a691d00d9ef3baa4677249e43b3100d783061
 
 ```
 
@@ -685,156 +758,216 @@ kubectl get pods -A -o wide
 
 ```
 
-```bash
-NAME         STATUS   ROLES           AGE     VERSION   INTERNAL-IP       EXTERNAL-IP   OS-IMAGE             KERNEL-VERSION      CONTAINER-RUNTIME
-k8scpnode    Ready    control-plane   64m     v1.25.0   192.168.122.169   <none>        Ubuntu 22.04.1 LTS   5.15.0-46-generic   containerd://1.6.8
-k8wrknode1   Ready    <none>          2m32s   v1.25.0   192.168.122.40    <none>        Ubuntu 22.04.1 LTS   5.15.0-46-generic   containerd://1.6.8
-k8wrknode2   Ready    <none>          2m28s   v1.25.0   192.168.122.8     <none>        Ubuntu 22.04.1 LTS   5.15.0-46-generic   containerd://1.6.8
+### All nodes have successfully joined the Kubernetes cluster
+
+so make sure they are in **Ready** status.
+
+```
+k8scpnode1   Ready  control-plane  58m    v1.31.3  192.168.122.223  <none>  Ubuntu 24.10  6.11.0-9-generic  containerd://1.7.23
+k8swrknode1  Ready  <none>         3m37s  v1.31.3  192.168.122.50   <none>  Ubuntu 24.10  6.11.0-9-generic  containerd://1.7.23
+k8swrknode2  Ready  <none>         3m37s  v1.31.3  192.168.122.10   <none>  Ubuntu 24.10  6.11.0-9-generic  containerd://1.7.23
 ```
 
-```bash
-NAMESPACE      NAME                                READY   STATUS    RESTARTS      AGE     IP                NODE         NOMINATED NODE   READINESS GATES
-kube-flannel   kube-flannel-ds-52g92               1/1     Running   0             2m32s   192.168.122.40    k8wrknode1   <none>           <none>
-kube-flannel   kube-flannel-ds-7qlm7               1/1     Running   0             2m28s   192.168.122.8     k8wrknode2   <none>           <none>
-kube-flannel   kube-flannel-ds-zqv2b               1/1     Running   0             64m     192.168.122.169   k8scpnode    <none>           <none>
-kube-system    coredns-565d847f94-lg54q            1/1     Running   0             64m     10.244.0.2        k8scpnode    <none>           <none>
-kube-system    coredns-565d847f94-ms8zk            1/1     Running   0             64m     10.244.0.3        k8scpnode    <none>           <none>
-kube-system    etcd-k8scpnode                      1/1     Running   0             64m     192.168.122.169   k8scpnode    <none>           <none>
-kube-system    kube-apiserver-k8scpnode            1/1     Running   0             64m     192.168.122.169   k8scpnode    <none>           <none>
-kube-system    kube-controller-manager-k8scpnode   1/1     Running   1 (12m ago)   64m     192.168.122.169   k8scpnode    <none>           <none>
-kube-system    kube-proxy-4khw6                    1/1     Running   0             2m32s   192.168.122.40    k8wrknode1   <none>           <none>
-kube-system    kube-proxy-gm27l                    1/1     Running   0             2m28s   192.168.122.8     k8wrknode2   <none>           <none>
-kube-system    kube-proxy-pv7tj                    1/1     Running   0             64m     192.168.122.169   k8scpnode    <none>           <none>
-kube-system    kube-scheduler-k8scpnode            1/1     Running   1 (12m ago)   64m     192.168.122.169   k8scpnode    <none>           <none>
+### All pods
 
+so make sure all pods are in **Running** status.
+
+```
+NAMESPACE     NAME                                READY  STATUS   RESTARTS  AGE    IP               NODE         NOMINATED NODE  READINESS GATES
+kube-flannel  kube-flannel-ds-9v8fq               1/1    Running  0         46m    192.168.122.223  k8scpnode1   <none>          <none>
+kube-flannel  kube-flannel-ds-hmtmv               1/1    Running  0         3m32s  192.168.122.50   k8swrknode1  <none>          <none>
+kube-flannel  kube-flannel-ds-rwkrm               1/1    Running  0         3m33s  192.168.122.10   k8swrknode2  <none>          <none>
+kube-system   coredns-7c65d6cfc9-dg6nq            1/1    Running  0         57m    10.244.0.2       k8scpnode1   <none>          <none>
+kube-system   coredns-7c65d6cfc9-r4ksc            1/1    Running  0         57m    10.244.0.3       k8scpnode1   <none>          <none>
+kube-system   etcd-k8scpnode1                     1/1    Running  0         57m    192.168.122.223  k8scpnode1   <none>          <none>
+kube-system   kube-apiserver-k8scpnode1           1/1    Running  0         57m    192.168.122.223  k8scpnode1   <none>          <none>
+kube-system   kube-controller-manager-k8scpnode1  1/1    Running  0         57m    192.168.122.223  k8scpnode1   <none>          <none>
+kube-system   kube-proxy-49f6q                    1/1    Running  0         3m32s  192.168.122.50   k8swrknode1  <none>          <none>
+kube-system   kube-proxy-6qpph                    1/1    Running  0         3m33s  192.168.122.10   k8swrknode2  <none>          <none>
+kube-system   kube-proxy-sxtk9                    1/1    Running  0         57m    192.168.122.223  k8scpnode1   <none>          <none>
+kube-system   kube-scheduler-k8scpnode1           1/1    Running  0         57m    192.168.122.223  k8scpnode1   <none>          <none>
 ```
 
 That's it !
 
 Our **k8s cluster** is running.
 
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+
+---
+
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+
 ## Kubernetes Dashboard
 
 > is a general purpose, web-based UI for Kubernetes clusters. It allows users to manage applications running in the cluster and troubleshoot them, as well as manage the cluster itself.
 
-We can proceed by installing a k8s dashboard to our k8s cluster.
+Next, we can move forward with installing the Kubernetes dashboard on our cluster.
 
-### Install kubernetes dashboard
+### Helm
 
-One simple way to install the kubernetes-dashboard, is by applying the latest (as of this writing) yaml configuration file.
+Helm—a package manager for Kubernetes that simplifies the process of deploying applications to a Kubernetes cluster. As of version 7.0.0, kubernetes-dashboard has dropped support for Manifest-based installation. Only Helm-based installation is supported now.
+
+Live on the edge !
 
 ```bash
-kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.6.1/aio/deploy/recommended.yaml
+curl -sL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
 
 ```
 
-the output of the above command should be something like
+### Install kubernetes dashboard
+
+We need to add the kubernetes-dashboard helm repository first and install the helm chart after:
 
 ```bash
+# Add kubernetes-dashboard repository
+helm repo add kubernetes-dashboard https://kubernetes.github.io/dashboard/
 
-namespace/kubernetes-dashboard created
-serviceaccount/kubernetes-dashboard created
-service/kubernetes-dashboard created
-secret/kubernetes-dashboard-certs created
-secret/kubernetes-dashboard-csrf created
-secret/kubernetes-dashboard-key-holder created
-configmap/kubernetes-dashboard-settings created
-role.rbac.authorization.k8s.io/kubernetes-dashboard created
-clusterrole.rbac.authorization.k8s.io/kubernetes-dashboard created
-rolebinding.rbac.authorization.k8s.io/kubernetes-dashboard created
-clusterrolebinding.rbac.authorization.k8s.io/kubernetes-dashboard created
-deployment.apps/kubernetes-dashboard created
-service/dashboard-metrics-scraper created
-deployment.apps/dashboard-metrics-scraper created
+# Deploy a Helm Release named "kubernetes-dashboard" using the kubernetes-dashboard chart
+helm upgrade --install kubernetes-dashboard kubernetes-dashboard/kubernetes-dashboard --create-namespace --namespace kubernetes-dashboard
+
+```
+
+The output of the command above should resemble something like this:
+
+```bash
+Release "kubernetes-dashboard" does not exist. Installing it now.
+
+NAME: kubernetes-dashboard
+LAST DEPLOYED: Mon Nov 25 15:36:51 2024
+NAMESPACE: kubernetes-dashboard
+STATUS: deployed
+REVISION: 1
+TEST SUITE: None
+
+NOTES:
+*************************************************************************************************
+*** PLEASE BE PATIENT: Kubernetes Dashboard may need a few minutes to get up and become ready ***
+*************************************************************************************************
+
+Congratulations! You have just installed Kubernetes Dashboard in your cluster.
+
+To access Dashboard run:
+  kubectl -n kubernetes-dashboard port-forward svc/kubernetes-dashboard-kong-proxy 8443:443
+
+NOTE: In case port-forward command does not work, make sure that kong service name is correct.
+      Check the services in Kubernetes Dashboard namespace using:
+        kubectl -n kubernetes-dashboard get svc
+
+Dashboard will be available at:
+  https://localhost:8443
 
 ```
 
 Verify the installation
 
-```bash
-kubectl get all -n kubernetes-dashboard
+`kubectl -n kubernetes-dashboard get svc`
+
+```
+NAME                                   TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
+kubernetes-dashboard-api               ClusterIP   10.106.254.153   <none>        8000/TCP   3m48s
+kubernetes-dashboard-auth              ClusterIP   10.103.156.167   <none>        8000/TCP   3m48s
+kubernetes-dashboard-kong-proxy        ClusterIP   10.105.230.13    <none>        443/TCP    3m48s
+kubernetes-dashboard-metrics-scraper   ClusterIP   10.109.7.234     <none>        8000/TCP   3m48s
+kubernetes-dashboard-web               ClusterIP   10.106.125.65    <none>        8000/TCP   3m48s
+```
+
+`kubectl get all -n kubernetes-dashboard`
+
+```
+NAME                                                       READY   STATUS    RESTARTS   AGE
+pod/kubernetes-dashboard-api-6dbb79747-rbtlc               1/1     Running   0          4m5s
+pod/kubernetes-dashboard-auth-55d7cc5fbd-xccft             1/1     Running   0          4m5s
+pod/kubernetes-dashboard-kong-57d45c4f69-t9lw2             1/1     Running   0          4m5s
+pod/kubernetes-dashboard-metrics-scraper-df869c886-lt624   1/1     Running   0          4m5s
+pod/kubernetes-dashboard-web-6ccf8d967-9rp8n               1/1     Running   0          4m5s
+
+NAME                                           TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
+service/kubernetes-dashboard-api               ClusterIP   10.106.254.153   <none>        8000/TCP   4m10s
+service/kubernetes-dashboard-auth              ClusterIP   10.103.156.167   <none>        8000/TCP   4m10s
+service/kubernetes-dashboard-kong-proxy        ClusterIP   10.105.230.13    <none>        443/TCP    4m10s
+service/kubernetes-dashboard-metrics-scraper   ClusterIP   10.109.7.234     <none>        8000/TCP   4m10s
+service/kubernetes-dashboard-web               ClusterIP   10.106.125.65    <none>        8000/TCP   4m10s
+
+NAME                                                   READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/kubernetes-dashboard-api               1/1     1            1           4m7s
+deployment.apps/kubernetes-dashboard-auth              1/1     1            1           4m7s
+deployment.apps/kubernetes-dashboard-kong              1/1     1            1           4m7s
+deployment.apps/kubernetes-dashboard-metrics-scraper   1/1     1            1           4m7s
+deployment.apps/kubernetes-dashboard-web               1/1     1            1           4m7s
+
+NAME                                                             DESIRED   CURRENT   READY   AGE
+replicaset.apps/kubernetes-dashboard-api-6dbb79747               1         1         1       4m6s
+replicaset.apps/kubernetes-dashboard-auth-55d7cc5fbd             1         1         1       4m6s
+replicaset.apps/kubernetes-dashboard-kong-57d45c4f69             1         1         1       4m6s
+replicaset.apps/kubernetes-dashboard-metrics-scraper-df869c886   1         1         1       4m6s
+replicaset.apps/kubernetes-dashboard-web-6ccf8d967               1         1         1       4m6s
 
 ```
 
-```bash
-NAME                                             READY   STATUS    RESTARTS   AGE
-pod/dashboard-metrics-scraper-64bcc67c9c-kvll7   1/1     Running   0          2m16s
-pod/kubernetes-dashboard-66c887f759-rr4gn        1/1     Running   0          2m16s
+### Accessing Dashboard via a NodePort
 
-NAME                                TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
-service/dashboard-metrics-scraper   ClusterIP   10.110.25.61    <none>        8000/TCP   2m16s
-service/kubernetes-dashboard        ClusterIP   10.100.65.122   <none>        443/TCP    2m16s
-
-NAME                                        READY   UP-TO-DATE   AVAILABLE   AGE
-deployment.apps/dashboard-metrics-scraper   1/1     1            1           2m16s
-deployment.apps/kubernetes-dashboard        1/1     1            1           2m16s
-
-NAME                                                   DESIRED   CURRENT   READY   AGE
-replicaset.apps/dashboard-metrics-scraper-64bcc67c9c   1         1         1       2m16s
-replicaset.apps/kubernetes-dashboard-66c887f759        1         1         1       2m16s
-
-```
-
-### Add a Node Port to kubernetes dashboard
-
-Kubernetes Dashboard by default runs on a internal 10.x.x.x IP.
-
-To access the dashboard we need to have a NodePort in the kubernetes-dashboard service.
+A NodePort is a type of Service in Kubernetes that exposes a service on each node’s IP at a static port. This allows external traffic to reach the service by accessing the node’s IP and port. kubernetes-dashboard by default runs on a internal 10.x.x.x IP. To access the dashboard we need to have a NodePort in the kubernetes-dashboard service.
 
 We can either **Patch** the service or **edit** the yaml file.
 
-Choose one of these two ways, do not run both of them (unnecessary - not harmful)
+Choose one of the two options below; there’s no need to run both as it’s unnecessary (but not harmful).
 
 #### Patch kubernetes-dashboard
 
 This is one way to add a NodePort.
 
 ```bash
-kubectl --namespace kubernetes-dashboard patch svc kubernetes-dashboard -p '{"spec": {"type": "NodePort"}}'
-
+kubectl --namespace kubernetes-dashboard patch svc kubernetes-dashboard-kong-proxy -p '{"spec": {"type": "NodePort"}}'
 ```
 
 output
 
-```bash
-service/kubernetes-dashboard patched
-
+```
+service/kubernetes-dashboard-kong-proxy patched
 ```
 
 verify the service
 
 ```bash
 kubectl get svc -n kubernetes-dashboard
-
 ```
 
-```bash
-NAME                        TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)         AGE
-dashboard-metrics-scraper   ClusterIP   10.110.25.61    <none>        8000/TCP        11m
-kubernetes-dashboard        NodePort    10.100.65.122   <none>        443:32709/TCP   11m
+output
 
 ```
+NAME                                   TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)         AGE
+kubernetes-dashboard-api               ClusterIP   10.106.254.153   <none>        8000/TCP        50m
+kubernetes-dashboard-auth              ClusterIP   10.103.156.167   <none>        8000/TCP        50m
+kubernetes-dashboard-kong-proxy        NodePort    10.105.230.13    <none>        443:32116/TCP   50m
+kubernetes-dashboard-metrics-scraper   ClusterIP   10.109.7.234     <none>        8000/TCP        50m
+kubernetes-dashboard-web               ClusterIP   10.106.125.65    <none>        8000/TCP        50m
+```
 
-we can see the **30480** in the kubernetes-dashboard.
+we can see the **32116** in the kubernetes-dashboard.
 
 #### Edit kubernetes-dashboard Service
 
 This is an alternative way to add a NodePort.
 
 ```bash
-kubectl edit svc -n kubernetes-dashboard kubernetes-dashboard
+kubectl edit svc -n kubernetes-dashboard kubernetes-dashboard-kong-proxy
 
 ```
 
 and chaning the service type from
 
-```bash
+```
 type: ClusterIP
 ```
 
 to
 
-```bash
+```
 type: NodePort
 ```
 
@@ -849,16 +982,18 @@ kubectl get pods -n kubernetes-dashboard -o wide
 
 ```
 
-```bash
-NAME                                         READY   STATUS    RESTARTS   AGE     IP           NODE         NOMINATED NODE   READINESS GATES
-dashboard-metrics-scraper-64bcc67c9c-fs7pt   1/1     Running   0          2m43s   10.244.1.9   k8wrknode1   <none>           <none>
-kubernetes-dashboard-66c887f759-pzt4z        1/1     Running   0          2m44s   10.244.2.9   k8wrknode2   <none>           <none>
-
+```
+NAME                                                   READY   STATUS    RESTARTS   AGE    IP            NODE          NOMINATED NODE   READINESS GATES
+kubernetes-dashboard-api-56f6f4b478-p4xbj              1/1     Running   0          55m   10.244.2.12   k8swrknode1   <none>           <none>
+kubernetes-dashboard-auth-565b88d5f9-fscj9             1/1     Running   0          55m   10.244.1.12   k8swrknode2   <none>           <none>
+kubernetes-dashboard-kong-57d45c4f69-rts57             1/1     Running   0          55m   10.244.2.10   k8swrknode1   <none>           <none>
+kubernetes-dashboard-metrics-scraper-df869c886-bljqr   1/1     Running   0          55m   10.244.2.11   k8swrknode1   <none>           <none>
+kubernetes-dashboard-web-6ccf8d967-t6k28               1/1     Running   0          55m   10.244.1.11   k8swrknode2   <none>           <none>
 ```
 
-In my setup the dashboard pod is running on the **worker node 2** and from the `/etc/hosts` is on the **192.168.122.8** IP.
+In my setup the dashboard pod is running on the **worker node 1** and from the `/etc/hosts` is on the **192.168.122.50** IP.
 
-The NodePort is **32709**
+The NodePort is **32116**
 
 ```bash
 k get svc -n kubernetes-dashboard -o wide
@@ -867,14 +1002,11 @@ k get svc -n kubernetes-dashboard -o wide
 
 So, we can open a new tab on our browser and type:
 
-```bash
-https://192.168.122.8:32709
-
-```
+    https://192.168.122.50:32116
 
 and accept the self-signed certificate!
 
-![k8s_dashboard.jpg](attachments/317345a8.jpg)
+![k8s_dashboard.jpg](attachments/SCR20241127pdvk.png)
 
 ### Create An Authentication Token (RBAC)
 
@@ -955,20 +1087,29 @@ kubectl -n kubernetes-dashboard create token admin-user
 
 ```
 
-```bash
-eyJhbGciOiJSUzI1NiIsImtpZCI6Im04M2JOY2k1Yk1hbFBhLVN2cjA4X1pkdktXNldqWkR4bjB6MGpTdFgtVHcifQ.eyJhdWQiOlsiaHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNsdXN0ZXIubG9jYWwiXSwiZXhwIjoxNjYxOTU2NDQ1LCJpYXQiOjE2NjE5NTI4NDUsImlzcyI6Imh0dHBzOi8va3ViZXJuZXRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVyLmxvY2FsIiwia3ViZXJuZXRlcy5pbyI6eyJuYW1lc3BhY2UiOiJrdWJlcm5ldGVzLWRhc2hib2FyZCIsInNlcnZpY2VhY2NvdW50Ijp7Im5hbWUiOiJhZG1pbi11c2VyIiwidWlkIjoiN2M4OWIyZDktMGIwYS00ZDg4LTk2Y2EtZDU3NjhjOWU2ZGYxIn19LCJuYmYiOjE2NjE5NTI4NDUsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDprdWJlcm5ldGVzLWRhc2hib2FyZDphZG1pbi11c2VyIn0.RMRQkZZhcoC5vCvck6hKfqXJ4dfN4JoQyAaClHZvOMI6JgQZEfB2-_Qsh5MfFApJUEit-0TX9r3CzW3JqvB7dmpTPxUQvHK68r82WGveBVp1wF37UyXu_IzxiCQzpCWYr3GcVGAGZVBbhhqNYm765FV02ZA_khHrW3WpB80ikhm_TNLkOS6Llq2UiLFZyHHmjl5pwvGzT7YXZe8s-llZSgc0UenEwPG-82eE279oOy6r4_NltoV1HB3uu0YjUJPlkqAPnHuSfAA7-8A3XAAVHhRQvFPea1qZLc4-oD24AcU0FjWqDMILEyE8zaD2ci8zEQBMoxcf2qmj0wn9cfbZwQ
-
+```
+eyJhbGciOiJSUzI1NiIsImtpZCI6IlpLbDVPVFQxZ1pTZlFKQlFJQkR6dVdGdGpvbER1YmVmVmlJTUd5WEVfdUEifQ.eyJhdWQiOlsiaHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNsdXN0ZXIubG9jYWwiXSwiZXhwIjoxNzMyNzI0NTQ5LCJpYXQiOjE3MzI3MjA5NDksImlzcyI6Imh0dHBzOi8va3ViZXJuZXRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVyLmxvY2FsIiwianRpIjoiMTczNzQyZGUtNDViZi00NjhkLTlhYWYtMDg3MDA3YmZmMjk3Iiwia3ViZXJuZXRlcy5pbyI6eyJuYW1lc3BhY2UiOiJrdWJlcm5ldGVzLWRhc2hib2FyZCIsInNlcnZpY2VhY2NvdW50Ijp7Im5hbWUiOiJhZG1pbi11c2VyIiwidWlkIjoiYWZhZmNhYzItZDYxNy00M2I0LTg2N2MtOTVkMzk5YmQ4ZjIzIn19LCJuYmYiOjE3MzI3MjA5NDksInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDprdWJlcm5ldGVzLWRhc2hib2FyZDphZG1pbi11c2VyIn0.AlPSIrRsCW2vPa1P3aDQ21jaeIU2MAtiKcDO23zNRcd8-GbJUX_3oSInmSx9o2029eI5QxciwjduIRdJfTuhiPPypb3tp31bPT6Pk6_BgDuN7n4Ki9Y2vQypoXJcJNikjZpSUzQ9TOm88e612qfidSc88ATpfpS518IuXCswPg4WPjkI1WSPn-lpL6etrRNVfkT1eeSR0fO3SW3HIWQX9ce-64T0iwGIFjs0BmhDbBtEW7vH5h_hHYv3cbj_6yGj85Vnpjfcs9a9nXxgPrn_up7iA6lPtLMvQJ2_xvymc57aRweqsGSHjP2NWya9EF-KBy6bEOPB29LaIaKMywSuOQ
 ```
 
 Add this token to the previous login page
 
-![k8s_token.jpg](attachments/4e1384ce.jpg)
+![k8s_token.jpg](attachments/SCR20241127pglz.png)
 
 ### Browsing Kubernetes Dashboard
 
 eg. Cluster --> Nodes
 
-![k8s_dashboard.jpg](attachments/3946b715.jpg)
+![k8s_dashboard.jpg](attachments/SCR20241127phat.png)
+
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+
+---
+
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
 
 ## Nginx App
 
@@ -1091,11 +1232,133 @@ Commercial support is available at
 
 ![k8s_nginx-app.jpg](attachments/88d4150c.jpg)
 
+
+### Change the default page
+
+Last but not least, let's modify the default index page to something different for educational purposes with the help of a **ConfigMap**
+
+The idea is to create a ConfigMap with the html of our new index page then we would like to attach it to our nginx deployment as a volume mount !
+
+```bash
+cat > nginx_config.map << EOF
+apiVersion: v1
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <title>A simple HTML document</title>
+    </head>
+    <body>
+        <p>Change the default nginx page </p>
+    </body>
+    </html>
+kind: ConfigMap
+metadata:
+  name: nginx-config-page
+  namespace: default
+EOF
+```
+
+    cat nginx_config.map
+
+```yaml
+apiVersion: v1
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <title>A simple HTML document</title>
+    </head>
+    <body>
+        <p>Change the default nginx page </p>
+    </body>
+    </html>
+kind: ConfigMap
+metadata:
+  name: nginx-config-page
+  namespace: default
+```
+
+apply the config.map
+
+```bash
+kubectl apply -f nginx_config.map
+
+```
+
+verify
+
+```bash
+kubectl get configmap
+```
+
+```
+NAME                DATA   AGE
+kube-root-ca.crt    1      2d3h
+nginx-config-page   1      16m
+```
+
+now the diffucult part, we need to mount our config map to the nginx deployment and to do that, we need to edit the nginx deployment.
+
+```bash
+kubectl edit deployments.apps nginx-app
+```
+
+rewrite spec section to include:
+
+* the VolumeMount &
+* the ConfigMap as Volume
+
+```yaml
+    spec:
+      containers:
+        - image: nginx
+        ...
+        volumeMounts:
+        - mountPath: /usr/share/nginx/html
+          name: nginx-config
+    ...
+      volumes:
+      - configMap:
+          name: nginx-config-page
+        name: nginx-config
+```
+
+After saving, the nginx deployment will be updated by it-self.
+
+finally we can see our updated first index page:
+
+![k8s_nginx-index.jpg](attachments/SCR20241127pnxl.png)
+
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+
+---
+
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+
 ## That's it
 
-I hope you enjoyed this blog post.
+I hope you enjoyed this post.
 
--ebal
+-Evaggelos Balaskas
+
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+
+---
+
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+
+### destroy our lab
 
 ```bash
 ./destroy.sh
