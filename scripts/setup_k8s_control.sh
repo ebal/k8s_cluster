@@ -103,11 +103,7 @@ kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Doc
 
 # Get k8s cluster join command for worker nodes.
 echo ""
-k8s_cp_ip=$(hostname -I | awk '{print $1}')
-k8s_token=$(sudo kubeadm token list | awk 'NR==2 {print $1}')
-k8s_hash=$(openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed 's/^.* //')
-
 echo "Run this command to the workers node to join the cluster:"
-echo "sudo kubeadm join ${k8s_cp_ip}:6443 --token ${k8s_token} --discovery-token-ca-cert-hash sha256:${k8s_hash}"
+sudo kubeadm token create --print-join-command
 echo ""
 echo ""

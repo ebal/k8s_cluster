@@ -694,6 +694,8 @@ sudo apt-get install -y kubelet kubeadm kubectl
 
 ## Get Token from the control-plane node
 
+(the hard way, to explain process)
+
 To join nodes to the kubernetes cluster, we need to have a couple of things.
 
 1. a token from control-plane node
@@ -731,6 +733,16 @@ openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outfor
 and in my k8s cluster is:
 
     2f68e4b27cae2d2a6431f3da308a691d00d9ef3baa4677249e43b3100d783061
+
+## Get (new) Token from the control-plane node
+
+(the easy way)
+
+```bash
+sudo kubeadm token create --print-join-command
+```
+
+but what's the fun with that?
 
 ### Join Workers to the kubernetes cluster
 
