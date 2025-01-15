@@ -98,6 +98,9 @@ echo "Run: kubectl cluster-info dump"
 kubectl get nodes   -o wide
 kubectl get pods -A -o wide
 
+# CNI Install: flannel
+kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml
+
 # Get k8s cluster join command for worker nodes.
 echo ""
 k8s_cp_ip=$(hostname -I | awk '{print $1}')
