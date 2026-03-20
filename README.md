@@ -812,6 +812,24 @@ Our **k8s cluster** is running.
 <p>&nbsp;</p>
 <p>&nbsp;</p>
 
+You can also manually add Labels in k8s workers nodes, so they display their Role.
+
+```bash
+kubectl label node k8swrknode1 node-role.kubernetes.io/worker=worker
+kubectl label node k8swrknode2 node-role.kubernetes.io/worker=worker
+```
+
+    kubectl get nodes
+
+output:
+
+```bash
+NAME          STATUS   ROLES           AGE     VERSION
+k8scpnode1    Ready    control-plane   14m     v1.35.3
+k8swrknode1   Ready    worker          9m8s    v1.35.3
+k8swrknode2   Ready    worker          4m50s   v1.35.3
+```
+
 ---
 
 <p>&nbsp;</p>
