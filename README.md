@@ -401,10 +401,10 @@ Install the kubernetes packages (kubedam, kubelet and kubectl) by first adding t
 
 This guide is using kubeadm, so we need to check the latest version.
 
-Kubernetes v1.31 is the latest version when this guide was written.
+Kubernetes v1.35 is the latest version when this guide was written.
 
 ```bash
-VERSION="1.31"
+VERSION="1.35"
 
 curl -fsSL https://pkgs.k8s.io/core:/stable:/v${VERSION}/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 
@@ -520,7 +520,7 @@ k get nodes -o wide
 
 ```bash
 NAME        STATUS  ROLES          AGE  VERSION  INTERNAL-IP      EXTERNAL-IP  OS-IMAGE      KERNEL-VERSION    CONTAINER-RUNTIME
-k8scpnode1  Ready   control-plane  12m  v1.31.3  192.168.122.223  <none>       Ubuntu 24.10  6.11.0-9-generic  containerd://1.7.23
+k8scpnode1  Ready   control-plane  12m  v1.35.3  192.168.122.223  <none>       Ubuntu 24.10  6.11.0-9-generic  containerd://1.7.23
 
 ```
 
@@ -676,7 +676,7 @@ sudo systemctl restart containerd.service
 ### Installing kubeadm, kubelet and kubectl on the worker node
 
 ```bash
-VERSION="1.31"
+VERSION="1.35"
 
 curl -fsSL https://pkgs.k8s.io/core:/stable:/v${VERSION}/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 
@@ -779,9 +779,9 @@ kubectl get pods -A -o wide
 so make sure they are in **Ready** status.
 
 ```
-k8scpnode1   Ready  control-plane  58m    v1.31.3  192.168.122.223  <none>  Ubuntu 24.10  6.11.0-9-generic  containerd://1.7.23
-k8swrknode1  Ready  <none>         3m37s  v1.31.3  192.168.122.50   <none>  Ubuntu 24.10  6.11.0-9-generic  containerd://1.7.23
-k8swrknode2  Ready  <none>         3m37s  v1.31.3  192.168.122.10   <none>  Ubuntu 24.10  6.11.0-9-generic  containerd://1.7.23
+k8scpnode1   Ready  control-plane  58m    v1.35.3  192.168.122.223  <none>  Ubuntu 24.10  6.11.0-9-generic  containerd://1.7.23
+k8swrknode1  Ready  <none>         3m37s  v1.35.3  192.168.122.50   <none>  Ubuntu 24.10  6.11.0-9-generic  containerd://1.7.23
+k8swrknode2  Ready  <none>         3m37s  v1.35.3  192.168.122.10   <none>  Ubuntu 24.10  6.11.0-9-generic  containerd://1.7.23
 ```
 
 ### All pods
