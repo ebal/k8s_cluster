@@ -1,0 +1,3 @@
+[submodule "tf_libvirt"]
+	path = tf_libvirt
+	url = https://github.com/ebal/tofu_libvirt_ubuntu_lts
