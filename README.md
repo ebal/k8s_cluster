@@ -836,6 +836,16 @@ k8swrknode2   Ready    worker          4m50s   v1.35.3
 <p>&nbsp;</p>
 <p>&nbsp;</p>
 
+## Kubernetes Metrics
+
+Kubernetes Metrics Server is a lightweight, cluster-wide add-on that collects real-time CPU and memory usage metrics from Kubernetes nodes and pods, exposing them via the Kubernetes Metrics API for Kubernetes built-in **autoscaling** pipelines.
+
+the recomended way to install it
+
+```bash
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml   
+```
+
 ## Kubernetes Dashboard
 
 > is a general purpose, web-based UI for Kubernetes clusters. It allows users to manage applications running in the cluster and troubleshoot them, as well as manage the cluster itself.
