@@ -6,6 +6,7 @@
 
 <!-- toc -->
 
+- [Architecture Diagram](#Architecture-Diagram)
 - [Prerequisites](#Prerequisites)
   * [Streamline the lab environment](#Streamline-the-lab-environment)
 - [Git Terraform Code for the kubernetes cluster](#Git-Terraform-Code-for-the-kubernetes-cluster)
@@ -41,10 +42,12 @@
   * [Installing kubeadm, kubelet and kubectl on the worker node](#Installing-kubeadm-kubelet-and-kubectl-on-the-worker-node)
 - [Get Token from the control-plane node](#Get-Token-from-the-control-plane-node)
   * [Get Certificate Hash from the control-plane node](#Get-Certificate-Hash-from-the-control-plane-node)
+- [Get (new) Token from the control-plane node](#Get-new-Token-from-the-control-plane-node)
   * [Join Workers to the kubernetes cluster](#Join-Workers-to-the-kubernetes-cluster)
 - [Is the kubernetes cluster running ?](#Is-the-kubernetes-cluster-running-)
   * [All nodes have successfully joined the Kubernetes cluster](#All-nodes-have-successfully-joined-the-Kubernetes-cluster)
   * [All pods](#All-pods)
+- [Kubernetes Metrics](#Kubernetes-Metrics)
 - [Kubernetes Dashboard](#Kubernetes-Dashboard)
   * [Helm](#Helm)
   * [Install kubernetes dashboard](#Install-kubernetes-dashboard)
